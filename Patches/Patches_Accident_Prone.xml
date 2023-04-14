@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="BiofuelRefinery"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>chemical</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>
