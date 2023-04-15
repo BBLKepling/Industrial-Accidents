@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
+using System.Linq;
 using Verse;
 using Verse.AI;
 
@@ -26,27 +27,89 @@ namespace Industrial_Accidents
                 }
             }
         }
+        private static IEnumerable<BodyPartRecord> compareBodyParts(List<BodyPartRecord> bodyList, HediffSet hediffSet)
+        {
+            foreach (BodyPartRecord part in bodyList)
+            {
+                if (!hediffSet.PartIsMissing(part))
+                {
+                    yield return part;
+                }
+            }
+        }
         public static bool TryHurtPawn(Pawn victim)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
-            string accType = (string)building.def.GetModExtension<IAccidentModExtension>().accidentType;
             //RecipeDef recipe = (RecipeDef)victim.jobs.curJob.RecipeDef;
+            string accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+            int complexOffset = building.def.GetModExtension<IAccidentModExtension>().complexity;
+
             if (accType == "industrial")
             {
-                //int craftSkill = (int)victim.skills.GetSkill(SkillDefOf.Crafting).levelInt;
-                //int recipeSkill = (int)recipe.skillRequirements
+                //int craftSkill = (victim.skills.GetSkill(SkillDefOf.Crafting).levelInt / 2);
+                //int randChance = (Rand.Range(1, 20) + complexOffset - craftSkill);
+                List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
+                handParts.AddRange(victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm));
+                HediffSet pawnParts = victim.health.hediffSet;
+                IEnumerable<BodyPartRecord> hasParts = compareBodyParts(handParts, pawnParts);
+                if (hasParts.Any())
+                {
+                    Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                    hediffHurt.Severity = Rand.Range(1f, 5f);
+                    victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                    return true;
+                }
+                return false;
+            }
+
+            if (accType == "cooking")
+            {
+                //int cookSkill = (victim.skills.GetSkill(SkillDefOf.Cooking).levelInt / 2);
+                //int randChance = (Rand.Range(1, 20) + complexOffset - cookSkill);
+                victim.TryAttachFire(1f);
                 return true;
             }
+
             if (accType == "chemical")
             {
-                //int intellSkill = (int)victim.skills.GetSkill(SkillDefOf.Intellectual).levelInt;
-                GenExplosion.DoExplosion(radius: 2.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Flame, instigator: building);
-                return true;
+                int intellSkill = (victim.skills.GetSkill(SkillDefOf.Intellectual).levelInt / 2);
+                int randChance = (Rand.Range(1,20) + complexOffset - intellSkill);
+                if (randChance > 20)
+                {
+                    GenExplosion.DoExplosion(radius: 2.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Bomb, instigator: building);
+                    return true;
+                }
+                if (randChance > 15)
+                {
+                    GenExplosion.DoExplosion(radius: 3.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Flame, instigator: building);
+                    return true;
+                }
+                if (randChance > 10)
+                {
+                    GenExplosion.DoExplosion(radius: 5.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Smoke, instigator: building, damAmount: -1, armorPenetration: -1, explosionSound: null, weapon: null, projectile: null, intendedTarget: null, postExplosionSpawnThingDef: ThingDefOf.Filth_Ash, postExplosionSpawnChance: 1f, postExplosionSpawnThingCount: 3, postExplosionGasType: GasType.BlindSmoke);
+                    return true;
+                }
+                if (randChance > 5)
+                {
+                    List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
+                    handParts.AddRange(victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm));
+                    HediffSet pawnParts = victim.health.hediffSet;
+                    IEnumerable<BodyPartRecord> hasParts = compareBodyParts(handParts, pawnParts);
+                    if (hasParts.Any())
+                    {
+                        Hediff hediffHurt = HediffMaker.MakeHediff(ClassesDefOf.ChemicalBurn, victim);
+                        hediffHurt.Severity = (randChance - 3);
+                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                        return true;
+                    }
+                }
+                return false;
             }
-            if (accType != "industrial" && accType != "chemical")
+
+            if (accType != "industrial" && accType != "cooking" && accType != "chemical")
             {
                 Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
-                Log.Error("Industrial Accidents: Usable strings: industrial, chemical");
+                Log.Error("Industrial Accidents: Usable strings: industrial, cooking, chemical");
                 return false;
             }
             return false;

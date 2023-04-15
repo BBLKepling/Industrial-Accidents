@@ -8,6 +8,7 @@ namespace Industrial_Accidents
         public string accidentType = "industrial";
         /*Valid String for accidentType
          * industrial
+         * cooking
          * chemical
         */
     }
