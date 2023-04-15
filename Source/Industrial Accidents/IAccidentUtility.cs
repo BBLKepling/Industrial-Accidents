@@ -27,9 +27,9 @@ namespace Industrial_Accidents
                 }
             }
         }
-        private static IEnumerable<BodyPartRecord> compareBodyParts(List<BodyPartRecord> bodyList, HediffSet hediffSet)
+        private static IEnumerable<BodyPartRecord> compareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
         {
-            foreach (BodyPartRecord part in bodyList)
+            foreach (BodyPartRecord part in bodyPartRecord)
             {
                 if (!hediffSet.PartIsMissing(part))
                 {
@@ -37,27 +37,56 @@ namespace Industrial_Accidents
                 }
             }
         }
+        private static int getSkillReq(RecipeDef recipeDef, SkillDef skillDef)
+        {
+            if (recipeDef != null)
+            {
+                if (!recipeDef.skillRequirements.NullOrEmpty())
+                {
+                    List<SkillRequirement> skillReq = recipeDef.skillRequirements;
+                    for (int i = 0; i < skillReq.Count; i++)
+                    {
+                        if (skillReq[i].skill == skillDef)
+                        {
+                            return skillReq[i].minLevel;
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
         public static bool TryHurtPawn(Pawn victim)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
-            //RecipeDef recipe = (RecipeDef)victim.jobs.curJob.RecipeDef;
+            RecipeDef recipe = (RecipeDef)victim.jobs.curJob.RecipeDef;
             string accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
             int complexOffset = building.def.GetModExtension<IAccidentModExtension>().complexity;
 
             if (accType == "industrial")
             {
-                //int craftSkill = (victim.skills.GetSkill(SkillDefOf.Crafting).levelInt / 2);
-                //int randChance = (Rand.Range(1, 20) + complexOffset - craftSkill);
+                int craftSkill = (victim.skills.GetSkill(SkillDefOf.Crafting).levelInt / 2);
+                int craftReq = getSkillReq(recipe, SkillDefOf.Crafting);
+                int randChance = (Rand.Range(1, 20) + complexOffset + craftReq  - craftSkill);
                 List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
                 handParts.AddRange(victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm));
                 HediffSet pawnParts = victim.health.hediffSet;
                 IEnumerable<BodyPartRecord> hasParts = compareBodyParts(handParts, pawnParts);
                 if (hasParts.Any())
                 {
-                    Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                    hediffHurt.Severity = Rand.Range(1f, 5f);
-                    victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
-                    return true;
+                    if (randChance > 20)
+                    {
+                        Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, victim);
+                        hediffHurt.Severity = Rand.Range(1f, 5f);
+                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                        return true;
+                    }
+                    if (randChance > 10)
+                    {
+                        Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                        hediffHurt.Severity = Rand.Range(1f, 5f);
+                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                        return true;
+                    }
                 }
                 return false;
             }
