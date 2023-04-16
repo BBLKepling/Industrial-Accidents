@@ -1,6 +1,7 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -27,7 +28,7 @@ namespace Industrial_Accidents
                 }
             }
         }
-        private static IEnumerable<BodyPartRecord> compareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
+        private static IEnumerable<BodyPartRecord> CompareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
         {
             foreach (BodyPartRecord part in bodyPartRecord)
             {
@@ -37,7 +38,7 @@ namespace Industrial_Accidents
                 }
             }
         }
-        private static int getSkillReq(RecipeDef recipeDef, SkillDef skillDef)
+        private static int GetSkillReq(RecipeDef recipeDef, SkillDef skillDef)
         {
             if (recipeDef != null)
             {
@@ -58,35 +59,74 @@ namespace Industrial_Accidents
         public static bool TryHurtPawn(Pawn victim)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
-            RecipeDef recipe = (RecipeDef)victim.jobs.curJob.RecipeDef;
-            string accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
             int complexOffset = building.def.GetModExtension<IAccidentModExtension>().complexity;
+            string accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+            accType.ToLower();
 
             if (accType == "industrial")
             {
                 int craftSkill = (victim.skills.GetSkill(SkillDefOf.Crafting).levelInt / 2);
-                int craftReq = getSkillReq(recipe, SkillDefOf.Crafting);
-                int randChance = (Rand.Range(1, 20) + complexOffset + craftReq  - craftSkill);
+                int craftReq = GetSkillReq(recipe, SkillDefOf.Crafting);
+                int randChance = 30;
+                //int randChance = Rand.Range(1, 20) + complexOffset + craftReq - craftSkill;
+                List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
                 List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
-                handParts.AddRange(victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm));
+                List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
+                List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
+                targetParts.AddRange(handParts);
+                targetParts.AddRange(armParts);
+                targetParts.AddRange(eyeParts);
                 HediffSet pawnParts = victim.health.hediffSet;
-                IEnumerable<BodyPartRecord> hasParts = compareBodyParts(handParts, pawnParts);
+                IEnumerable<BodyPartRecord> hasParts = CompareBodyParts(targetParts, pawnParts);
+                BodyPartRecord selectPart = hasParts.RandomElement();
                 if (hasParts.Any())
                 {
                     if (randChance > 20)
                     {
-                        Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, victim);
-                        hediffHurt.Severity = Rand.Range(1f, 5f);
-                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                        Hediff hediffRemove = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
+                        hediffRemove.Severity = 50;
+                        if (handParts.Contains(selectPart))
+                        {
+                            Messages.Message("Hand", MessageTypeDefOf.NegativeEvent, true);
+                        }
+                        if (armParts.Contains(selectPart))
+                        {
+                            Messages.Message("Arm", MessageTypeDefOf.NegativeEvent, true);
+                        }
+                        if (eyeParts.Contains(selectPart))
+                        {
+                            Messages.Message("Eye", MessageTypeDefOf.NegativeEvent, true);
+                        }
+                        victim.health.AddHediff(hediffRemove, selectPart);
+                        victim.jobs.StopAll();
+                        return true;
+                    }
+                    if (randChance > 15)
+                    {
+                        Hediff hediffCut = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
+                        hediffCut.Severity = Rand.Range(5f, randChance);
+                        victim.health.AddHediff(hediffCut, selectPart);
                         return true;
                     }
                     if (randChance > 10)
                     {
-                        Hediff hediffHurt = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                        hediffHurt.Severity = Rand.Range(1f, 5f);
-                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                        Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                        hediffCut.Severity = Rand.Range(5f, randChance);
+                        victim.health.AddHediff(hediffCut, selectPart);
                         return true;
                     }
+                    if (randChance > 5)
+                    {
+                        Hediff hediffCut = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
+                        hediffCut.Severity = Rand.Range(1f, 5f);
+                        victim.health.AddHediff(hediffCut, selectPart);
+                        return true;
+                    }
+                    Hediff hediffCrush = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                    hediffCrush.Severity = Rand.Range(1f, 5f);
+                    victim.health.AddHediff(hediffCrush, selectPart);
+                    return true;
                 }
                 return false;
             }
@@ -102,7 +142,9 @@ namespace Industrial_Accidents
             if (accType == "chemical")
             {
                 int intellSkill = (victim.skills.GetSkill(SkillDefOf.Intellectual).levelInt / 2);
-                int randChance = (Rand.Range(1,20) + complexOffset - intellSkill);
+                int intellReq = GetSkillReq(recipe, SkillDefOf.Intellectual);
+                int randChance = 0;
+                //int randChance = (Rand.Range(1, 20) + complexOffset + intellReq - intellSkill);
                 if (randChance > 20)
                 {
                     GenExplosion.DoExplosion(radius: 2.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Bomb, instigator: building);
@@ -118,19 +160,15 @@ namespace Industrial_Accidents
                     GenExplosion.DoExplosion(radius: 5.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Smoke, instigator: building, damAmount: -1, armorPenetration: -1, explosionSound: null, weapon: null, projectile: null, intendedTarget: null, postExplosionSpawnThingDef: ThingDefOf.Filth_Ash, postExplosionSpawnChance: 1f, postExplosionSpawnThingCount: 3, postExplosionGasType: GasType.BlindSmoke);
                     return true;
                 }
-                if (randChance > 5)
+                List<BodyPartRecord> allParts = victim.def.race.body.AllParts;
+                HediffSet pawnParts = victim.health.hediffSet;
+                IEnumerable<BodyPartRecord> hasParts = CompareBodyParts(allParts, pawnParts);
+                if (hasParts.Any())
                 {
-                    List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
-                    handParts.AddRange(victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm));
-                    HediffSet pawnParts = victim.health.hediffSet;
-                    IEnumerable<BodyPartRecord> hasParts = compareBodyParts(handParts, pawnParts);
-                    if (hasParts.Any())
-                    {
-                        Hediff hediffHurt = HediffMaker.MakeHediff(ClassesDefOf.ChemicalBurn, victim);
-                        hediffHurt.Severity = (randChance - 3);
-                        victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
-                        return true;
-                    }
+                    Hediff hediffHurt = HediffMaker.MakeHediff(ClassesDefOf.ChemicalBurn, victim);
+                    hediffHurt.Severity = (randChance - 3);
+                    victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
+                    return true;
                 }
                 return false;
             }
@@ -141,6 +179,7 @@ namespace Industrial_Accidents
                 Log.Error("Industrial Accidents: Usable strings: industrial, cooking, chemical");
                 return false;
             }
+            Log.Error("Industrial Accidents: If you're seeing this something went wrong as all the checks to prevent you from seeing this failed.");
             return false;
         }
     }
