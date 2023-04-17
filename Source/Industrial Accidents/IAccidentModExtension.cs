@@ -1,4 +1,5 @@
-﻿using Verse;
+﻿using RimWorld;
+using Verse;
 
 namespace Industrial_Accidents
 {
@@ -6,5 +7,6 @@ namespace Industrial_Accidents
     {
         public int complexity = 0;
         public string accidentType = null;
+        public SkillDef skillDef = null;
     }
 }

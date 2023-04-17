@@ -69,6 +69,7 @@ namespace Industrial_Accidents
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             // determine accident type and complexity offset
             // RecipeDef>1stProduct>Building
+            SkillDef skillOverride = null;
             ThingDef productThingDef = null;
             string accType = null;
             int complexOffset = 0;
@@ -78,6 +79,10 @@ namespace Industrial_Accidents
                 if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
                     accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                }
+                if (building.def.GetModExtension<IAccidentModExtension>().skillDef != null)
+                {
+                    skillOverride = building.def.GetModExtension<IAccidentModExtension>().skillDef;
                 }
             }
             if (recipe != null)
@@ -96,6 +101,10 @@ namespace Industrial_Accidents
                                 accType = productList[i].thingDef.GetModExtension<IAccidentModExtension>().accidentType;
                                 productThingDef = productList[i].thingDef;
                             }
+                            if (productList[i].thingDef.GetModExtension<IAccidentModExtension>().skillDef != null)
+                            {
+                                skillOverride = productList[i].thingDef.GetModExtension<IAccidentModExtension>().skillDef;
+                            }
                         }
                     }
                     if (productThingDef != null)
@@ -110,33 +119,43 @@ namespace Industrial_Accidents
                     {
                         accType = recipe.GetModExtension<IAccidentModExtension>().accidentType;
                     }
+                    if (recipe.GetModExtension<IAccidentModExtension>().skillDef != null)
+                    {
+                        skillOverride = recipe.GetModExtension<IAccidentModExtension>().skillDef;
+                    }
                 }
             }
             accType.ToLower();
             // Accidents
             if (accType == "industrial")
             {
-                return IndustrialAccident(victim, complexOffset);
+                return IndustrialAccident(victim, complexOffset, skillOverride);
+            }
+            if (accType == "neolithic")
+            {
+                //return NeolithicAccident(victim, complexOffset, skillOverride);
+                Messages.Message("neolithic", MessageTypeDefOf.NegativeEvent, false);
+                return true;
             }
             if (accType == "cooking")
             {
-                //return CookingAccident(victim, complexOffset);
+                //return CookingAccident(victim, complexOffset, skillOverride);
                 Messages.Message("cooking", MessageTypeDefOf.NegativeEvent, false);
                 return true;
             }
             // Error Reporting
-            if (accType != "industrial" && accType != "cooking")
+            if (accType != "industrial" && accType != "cooking" && accType != "neolithic")
             {
                 Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
-                Log.Error("Industrial Accidents: Usable strings: industrial, cooking");
+                Log.Error("Industrial Accidents: Usable strings: industrial, neolithic, cooking");
                 if (building != null)
                 {
                     if (building.def.HasModExtension<IAccidentModExtension>())
                     {
                         string errorBuilding = building.def.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorBuilding != null && errorBuilding != "industrial" && errorBuilding != "cooking")
+                        if (errorBuilding != null && errorBuilding != "industrial" && errorBuilding != "neolithic" && errorBuilding != "cooking")
                         {
-                            Log.Error("Industrial Accidents: <defName>" + building.def.defName + "</defName> has <accidentType>" + errorBuilding + "</accidentType>");
+                            Log.Error("Industrial Accidents: Building <defName>" + building.def.defName + "</defName> has <accidentType>" + errorBuilding + "</accidentType>");
                         }
                     }
                 }
@@ -145,9 +164,9 @@ namespace Industrial_Accidents
                     if (productThingDef.HasModExtension<IAccidentModExtension>())
                     {
                         string errorThingDef = productThingDef.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorThingDef != null && errorThingDef != "industrial" && errorThingDef != "cooking")
+                        if (errorThingDef != null && errorThingDef != "industrial" && errorThingDef != "neolithic" && errorThingDef != "cooking")
                         {
-                            Log.Error("Industrial Accidents: <defName>" + productThingDef.defName + "</defName> has <accidentType>" + errorThingDef + "</accidentType>");
+                            Log.Error("Industrial Accidents: ThingDef <defName>" + productThingDef.defName + "</defName> has <accidentType>" + errorThingDef + "</accidentType>");
                         }
                     }
                 }
@@ -156,9 +175,9 @@ namespace Industrial_Accidents
                     if (recipe.HasModExtension<IAccidentModExtension>())
                     {
                         string errorRecipeDef = recipe.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorRecipeDef != null && errorRecipeDef != "industrial" && errorRecipeDef != "cooking")
+                        if (errorRecipeDef != null && errorRecipeDef != "industrial" && errorRecipeDef != "neolithic" && errorRecipeDef != "cooking")
                         {
-                            Log.Error("Industrial Accidents: <defName>" + recipe.defName + "</defName> has <accidentType>" + errorRecipeDef + "</accidentType>");
+                            Log.Error("Industrial Accidents: RecipeDef <defName>" + recipe.defName + "</defName> has <accidentType>" + errorRecipeDef + "</accidentType>");
                         }
                     }
                 }
@@ -174,9 +193,14 @@ namespace Industrial_Accidents
         }
 
         //Accident Methods
-        public static bool IndustrialAccident(Pawn victim, int complexOffset)
+        public static bool IndustrialAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
-            int craftSkill = victim.skills.GetSkill(SkillDefOf.Crafting).levelInt;
+            SkillDef skillOverride = SkillDefOf.Crafting;
+            if (skillDef != null)
+            {
+                skillOverride = skillDef;
+            }
+            int craftSkill = victim.skills.GetSkill(skillOverride).levelInt;
             //int randChance = 30;
             int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(ClassesDefOf.Finger);
@@ -200,26 +224,26 @@ namespace Industrial_Accidents
             if (hasParts.Any())
             {
                 BodyPartRecord selectPart = hasParts.RandomElement();
+                if (fingerParts.Contains(selectPart))
+                {
+                    Messages.Message("Finger", MessageTypeDefOf.NegativeEvent, true);
+                }
+                if (handParts.Contains(selectPart))
+                {
+                    Messages.Message("Hand", MessageTypeDefOf.NegativeEvent, true);
+                }
+                if (armParts.Contains(selectPart))
+                {
+                    Messages.Message("Arm", MessageTypeDefOf.NegativeEvent, true);
+                }
+                if (eyeParts.Contains(selectPart))
+                {
+                    Messages.Message("Eye", MessageTypeDefOf.NegativeEvent, true);
+                }
                 if (randChance > 20)
                 {
                     Hediff hediffRemove = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
                     hediffRemove.Severity = 50;
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        Messages.Message("Finger", MessageTypeDefOf.NegativeEvent, true);
-                    }
-                    if (handParts.Contains(selectPart))
-                    {
-                        Messages.Message("Hand", MessageTypeDefOf.NegativeEvent, true);
-                    }
-                    if (armParts.Contains(selectPart))
-                    {
-                        Messages.Message("Arm", MessageTypeDefOf.NegativeEvent, true);
-                    }
-                    if (eyeParts.Contains(selectPart))
-                    {
-                        Messages.Message("Eye", MessageTypeDefOf.NegativeEvent, true);
-                    }
                     victim.health.AddHediff(hediffRemove, selectPart);
                     victim.jobs.StopAll();
                     return true;
@@ -256,27 +280,31 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool CookingAccident(Pawn victim, int complexOffset)
+        public static bool NeolithicAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
-        public static bool ButcheryAccident(Pawn victim, int complexOffset)
+        public static bool CookingAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
-        public static bool MethLabAccident(Pawn victim, int complexOffset)
+        public static bool ButcheryAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
-        public static bool ChemicalAccident(Pawn victim, int complexOffset)
+        public static bool MethLabAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
-        public static bool ChemfuelAccident(Pawn victim, int complexOffset)
+        public static bool ChemicalAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
-        public static bool SewingAccident(Pawn victim, int complexOffset)
+        public static bool ChemfuelAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        {
+            return true;
+        }
+        public static bool SewingAccident(Pawn victim, int complexOffset, SkillDef skillDef)
         {
             return true;
         }
