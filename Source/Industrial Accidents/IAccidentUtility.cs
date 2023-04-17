@@ -1,7 +1,5 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -17,18 +15,159 @@ namespace Industrial_Accidents
                 if (workingPawns[i] is Pawn)
                 {
                     Pawn pawn = (Pawn)workingPawns[i];
-                    if (pawn.jobs.curJob?.def == JobDefOf.DoBill)
+                    if (pawn.IsColonist && pawn.jobs.curJob?.def == JobDefOf.DoBill)
                     {
                         Building building = (Building)pawn.jobs.curJob.GetTarget(TargetIndex.A);
-                        if (building.def.HasModExtension<IAccidentModExtension>() && (pawn.Position - building.Position).ToVector3().MagnitudeHorizontal() < 3)
+                        if (building != null)
                         {
-                            yield return pawn;
+                            if ((pawn.Position - building.Position).ToVector3().MagnitudeHorizontal() < 3)
+                            {
+                                if (building.def.HasModExtension<IAccidentModExtension>())
+                                {
+                                    if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                                    {
+                                        yield return pawn;
+                                    }
+                                }
+                                if (pawn.jobs.curJob.RecipeDef != null)
+                                {
+                                    if (pawn.jobs.curJob.RecipeDef.HasModExtension<IAccidentModExtension>())
+                                    {
+                                        if (pawn.jobs.curJob.RecipeDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                                        {
+                                            yield return pawn;
+                                        }
+                                    }
+                                    if (!pawn.jobs.curJob.RecipeDef.products.NullOrEmpty())
+                                    {
+                                        List<ThingDefCountClass> productList = pawn.jobs.curJob.RecipeDef.products;
+                                        for (int q = 0; q < productList.Count; q++)
+                                        {
+                                            if (productList[q].thingDef.HasModExtension<IAccidentModExtension>())
+                                            {
+                                                if (productList[q].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                                                {
+                                                    yield return pawn;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        private static IEnumerable<BodyPartRecord> CompareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
+        public static bool TryHurtPawn(Pawn victim)
+        {
+            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
+            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
+            // determine accident type and complexity offset
+            // RecipeDef>1stProduct>Building
+            ThingDef productThingDef = null;
+            string accType = null;
+            int complexOffset = 0;
+            if (building.def.HasModExtension<IAccidentModExtension>())
+            {
+                complexOffset = complexOffset + building.def.GetModExtension<IAccidentModExtension>().complexity;
+                if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                {
+                    accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                }
+            }
+            if (recipe != null)
+            {
+                if (!recipe.products.NullOrEmpty())
+                {
+                    List<ThingDefCountClass> productList = recipe.products;
+                    //since the last over writes the first we reverse to make the first last
+                    productList.Reverse();
+                    for (int i = 0; i < productList.Count; i++)
+                    {
+                        if (productList[i].thingDef.HasModExtension<IAccidentModExtension>())
+                        {
+                            if (productList[i].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                            {
+                                accType = productList[i].thingDef.GetModExtension<IAccidentModExtension>().accidentType;
+                                productThingDef = productList[i].thingDef;
+                            }
+                        }
+                    }
+                    if (productThingDef != null)
+                    {
+                        complexOffset = complexOffset + productThingDef.GetModExtension<IAccidentModExtension>().complexity;
+                    }
+                }
+                if (recipe.HasModExtension<IAccidentModExtension>())
+                {
+                    complexOffset = complexOffset + recipe.GetModExtension<IAccidentModExtension>().complexity;
+                    if (recipe.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    {
+                        accType = recipe.GetModExtension<IAccidentModExtension>().accidentType;
+                    }
+                }
+            }
+            accType.ToLower();
+            // Accidents
+            if (accType == "industrial")
+            {
+                //code goes here
+                Messages.Message("industrial", MessageTypeDefOf.NegativeEvent, false);
+                return true;
+            }
+            if (accType == "cooking")
+            {
+                //code goes here
+                Messages.Message("cooking", MessageTypeDefOf.NegativeEvent, false);
+                return true;
+            }
+            // Error Reporting
+            if (accType != "industrial" && accType != "cooking")
+            {
+                Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
+                Log.Error("Industrial Accidents: Usable strings: industrial, cooking");
+                if (building != null)
+                {
+                    if (building.def.HasModExtension<IAccidentModExtension>())
+                    {
+                        if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        {
+                            Log.Error("Industrial Accidents: Possible Building culprit: <defName>" + building.def.defName + "</defName> has <accidentType>" + building.def.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                        }
+                    }
+                }
+                if (productThingDef != null)
+                {
+                    if (productThingDef.HasModExtension<IAccidentModExtension>())
+                    {
+                        if (productThingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        {
+                            Log.Error("Industrial Accidents: Possible ThingDef culprit: <defName>" + productThingDef.defName + "</defName> has <accidentType>" + productThingDef.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                        }
+                    }
+                }
+                if (recipe != null)
+                {
+                    if (recipe.HasModExtension<IAccidentModExtension>())
+                    {
+                        if (recipe.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        {
+                            Log.Error("Industrial Accidents: Possible RecipeDef culprit: <defName>" + recipe.defName + "</defName> has <accidentType>" + recipe.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                        }
+                    }
+                }
+                return false;
+            }
+            if (accType == null)
+            {
+                Log.Error("Industrial Accidents: Variable for accType somehow returned null");
+                return false;
+            }
+            Log.Error("Industrial Accidents: If you're seeing this something went wrong as all the checks to prevent you from seeing this failed.");
+            return false;
+        }
+        public static IEnumerable<BodyPartRecord> CompareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
         {
             foreach (BodyPartRecord part in bodyPartRecord)
             {
@@ -37,150 +176,6 @@ namespace Industrial_Accidents
                     yield return part;
                 }
             }
-        }
-        private static int GetSkillReq(RecipeDef recipeDef, SkillDef skillDef)
-        {
-            if (recipeDef != null)
-            {
-                if (!recipeDef.skillRequirements.NullOrEmpty())
-                {
-                    List<SkillRequirement> skillReq = recipeDef.skillRequirements;
-                    for (int i = 0; i < skillReq.Count; i++)
-                    {
-                        if (skillReq[i].skill == skillDef)
-                        {
-                            return skillReq[i].minLevel;
-                        }
-                    }
-                }
-            }
-            return 0;
-        }
-        public static bool TryHurtPawn(Pawn victim)
-        {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
-            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
-            int complexOffset = building.def.GetModExtension<IAccidentModExtension>().complexity;
-            string accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
-            accType.ToLower();
-
-            if (accType == "industrial")
-            {
-                int craftSkill = (victim.skills.GetSkill(SkillDefOf.Crafting).levelInt / 2);
-                int craftReq = GetSkillReq(recipe, SkillDefOf.Crafting);
-                int randChance = 30;
-                //int randChance = Rand.Range(1, 20) + complexOffset + craftReq - craftSkill;
-                List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
-                List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
-                List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
-                List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
-                targetParts.AddRange(handParts);
-                targetParts.AddRange(armParts);
-                targetParts.AddRange(eyeParts);
-                HediffSet pawnParts = victim.health.hediffSet;
-                IEnumerable<BodyPartRecord> hasParts = CompareBodyParts(targetParts, pawnParts);
-                BodyPartRecord selectPart = hasParts.RandomElement();
-                if (hasParts.Any())
-                {
-                    if (randChance > 20)
-                    {
-                        Hediff hediffRemove = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
-                        hediffRemove.Severity = 50;
-                        if (handParts.Contains(selectPart))
-                        {
-                            Messages.Message("Hand", MessageTypeDefOf.NegativeEvent, true);
-                        }
-                        if (armParts.Contains(selectPart))
-                        {
-                            Messages.Message("Arm", MessageTypeDefOf.NegativeEvent, true);
-                        }
-                        if (eyeParts.Contains(selectPart))
-                        {
-                            Messages.Message("Eye", MessageTypeDefOf.NegativeEvent, true);
-                        }
-                        victim.health.AddHediff(hediffRemove, selectPart);
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    if (randChance > 15)
-                    {
-                        Hediff hediffCut = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
-                        hediffCut.Severity = Rand.Range(5f, randChance);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        return true;
-                    }
-                    if (randChance > 10)
-                    {
-                        Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                        hediffCut.Severity = Rand.Range(5f, randChance);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        return true;
-                    }
-                    if (randChance > 5)
-                    {
-                        Hediff hediffCut = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
-                        hediffCut.Severity = Rand.Range(1f, 5f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        return true;
-                    }
-                    Hediff hediffCrush = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                    hediffCrush.Severity = Rand.Range(1f, 5f);
-                    victim.health.AddHediff(hediffCrush, selectPart);
-                    return true;
-                }
-                return false;
-            }
-
-            if (accType == "cooking")
-            {
-                //int cookSkill = (victim.skills.GetSkill(SkillDefOf.Cooking).levelInt / 2);
-                //int randChance = (Rand.Range(1, 20) + complexOffset - cookSkill);
-                victim.TryAttachFire(1f);
-                return true;
-            }
-
-            if (accType == "chemical")
-            {
-                int intellSkill = (victim.skills.GetSkill(SkillDefOf.Intellectual).levelInt / 2);
-                int intellReq = GetSkillReq(recipe, SkillDefOf.Intellectual);
-                int randChance = 0;
-                //int randChance = (Rand.Range(1, 20) + complexOffset + intellReq - intellSkill);
-                if (randChance > 20)
-                {
-                    GenExplosion.DoExplosion(radius: 2.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Bomb, instigator: building);
-                    return true;
-                }
-                if (randChance > 15)
-                {
-                    GenExplosion.DoExplosion(radius: 3.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Flame, instigator: building);
-                    return true;
-                }
-                if (randChance > 10)
-                {
-                    GenExplosion.DoExplosion(radius: 5.9f, center: building.Position, map: building.Map, damType: DamageDefOf.Smoke, instigator: building, damAmount: -1, armorPenetration: -1, explosionSound: null, weapon: null, projectile: null, intendedTarget: null, postExplosionSpawnThingDef: ThingDefOf.Filth_Ash, postExplosionSpawnChance: 1f, postExplosionSpawnThingCount: 3, postExplosionGasType: GasType.BlindSmoke);
-                    return true;
-                }
-                List<BodyPartRecord> allParts = victim.def.race.body.AllParts;
-                HediffSet pawnParts = victim.health.hediffSet;
-                IEnumerable<BodyPartRecord> hasParts = CompareBodyParts(allParts, pawnParts);
-                if (hasParts.Any())
-                {
-                    Hediff hediffHurt = HediffMaker.MakeHediff(ClassesDefOf.ChemicalBurn, victim);
-                    hediffHurt.Severity = (randChance - 3);
-                    victim.health.AddHediff(hediffHurt, hasParts.RandomElement());
-                    return true;
-                }
-                return false;
-            }
-
-            if (accType != "industrial" && accType != "cooking" && accType != "chemical")
-            {
-                Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
-                Log.Error("Industrial Accidents: Usable strings: industrial, cooking, chemical");
-                return false;
-            }
-            Log.Error("Industrial Accidents: If you're seeing this something went wrong as all the checks to prevent you from seeing this failed.");
-            return false;
         }
     }
 }

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/*[self::ThingDef or self::thingDef or self::RecipeDef or self::recipeDef]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>industrial</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>

@@ -4,7 +4,7 @@ using Verse;
 
 namespace Industrial_Accidents
 {
-    internal class IncidentWorker_IAccident : IncidentWorker
+    public class IncidentWorker_IAccident : IncidentWorker
     {
         protected override bool CanFireNowSub(IncidentParms parms)
         {
