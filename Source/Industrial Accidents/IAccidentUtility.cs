@@ -131,9 +131,10 @@ namespace Industrial_Accidents
                 {
                     if (building.def.HasModExtension<IAccidentModExtension>())
                     {
-                        if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        string errorBuilding = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                        if (errorBuilding != null && errorBuilding != "industrial" && errorBuilding != "cooking")
                         {
-                            Log.Error("Industrial Accidents: Possible Building culprit: <defName>" + building.def.defName + "</defName> has <accidentType>" + building.def.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                            Log.Error("Industrial Accidents: <defName>" + building.def.defName + "</defName> has <accidentType>" + errorBuilding + "</accidentType>");
                         }
                     }
                 }
@@ -141,9 +142,10 @@ namespace Industrial_Accidents
                 {
                     if (productThingDef.HasModExtension<IAccidentModExtension>())
                     {
-                        if (productThingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        string errorThingDef = productThingDef.GetModExtension<IAccidentModExtension>().accidentType;
+                        if (errorThingDef != null && errorThingDef != "industrial" && errorThingDef != "cooking")
                         {
-                            Log.Error("Industrial Accidents: Possible ThingDef culprit: <defName>" + productThingDef.defName + "</defName> has <accidentType>" + productThingDef.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                            Log.Error("Industrial Accidents: <defName>" + productThingDef.defName + "</defName> has <accidentType>" + errorThingDef + "</accidentType>");
                         }
                     }
                 }
@@ -151,9 +153,10 @@ namespace Industrial_Accidents
                 {
                     if (recipe.HasModExtension<IAccidentModExtension>())
                     {
-                        if (recipe.GetModExtension<IAccidentModExtension>().accidentType != null)
+                        string errorRecipeDef = recipe.GetModExtension<IAccidentModExtension>().accidentType;
+                        if (errorRecipeDef != null && errorRecipeDef != "industrial" && errorRecipeDef != "cooking")
                         {
-                            Log.Error("Industrial Accidents: Possible RecipeDef culprit: <defName>" + recipe.defName + "</defName> has <accidentType>" + recipe.GetModExtension<IAccidentModExtension>().accidentType + "</accidentType>");
+                            Log.Error("Industrial Accidents: <defName>" + recipe.defName + "</defName> has <accidentType>" + errorRecipeDef + "</accidentType>");
                         }
                     }
                 }
