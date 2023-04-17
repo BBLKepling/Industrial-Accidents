@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
+using System.Linq;
 using Verse;
 using Verse.AI;
 
@@ -7,6 +8,7 @@ namespace Industrial_Accidents
 {
     public static class IAccidentUtility
     {
+        //CanFireNowSub
         public static IEnumerable<Pawn> GetWorkingPawns(Map map)
         {
             List<Thing> workingPawns = map.listerThings.AllThings;
@@ -59,6 +61,8 @@ namespace Industrial_Accidents
                 }
             }
         }
+
+        //TryExecuteWorker
         public static bool TryHurtPawn(Pawn victim)
         {
             RecipeDef recipe = victim.jobs.curJob.RecipeDef;
@@ -70,7 +74,7 @@ namespace Industrial_Accidents
             int complexOffset = 0;
             if (building.def.HasModExtension<IAccidentModExtension>())
             {
-                complexOffset = complexOffset + building.def.GetModExtension<IAccidentModExtension>().complexity;
+                complexOffset += building.def.GetModExtension<IAccidentModExtension>().complexity;
                 if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
                     accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
@@ -96,12 +100,12 @@ namespace Industrial_Accidents
                     }
                     if (productThingDef != null)
                     {
-                        complexOffset = complexOffset + productThingDef.GetModExtension<IAccidentModExtension>().complexity;
+                        complexOffset += productThingDef.GetModExtension<IAccidentModExtension>().complexity;
                     }
                 }
                 if (recipe.HasModExtension<IAccidentModExtension>())
                 {
-                    complexOffset = complexOffset + recipe.GetModExtension<IAccidentModExtension>().complexity;
+                    complexOffset += recipe.GetModExtension<IAccidentModExtension>().complexity;
                     if (recipe.GetModExtension<IAccidentModExtension>().accidentType != null)
                     {
                         accType = recipe.GetModExtension<IAccidentModExtension>().accidentType;
@@ -112,13 +116,11 @@ namespace Industrial_Accidents
             // Accidents
             if (accType == "industrial")
             {
-                //code goes here
-                Messages.Message("industrial", MessageTypeDefOf.NegativeEvent, false);
-                return true;
+                return IndustrialAccident(victim, complexOffset);
             }
             if (accType == "cooking")
             {
-                //code goes here
+                //return CookingAccident(victim, complexOffset);
                 Messages.Message("cooking", MessageTypeDefOf.NegativeEvent, false);
                 return true;
             }
@@ -170,15 +172,113 @@ namespace Industrial_Accidents
             Log.Error("Industrial Accidents: If you're seeing this something went wrong as all the checks to prevent you from seeing this failed.");
             return false;
         }
-        public static IEnumerable<BodyPartRecord> CompareBodyParts(List<BodyPartRecord> bodyPartRecord, HediffSet hediffSet)
+
+        //Accident Methods
+        public static bool IndustrialAccident(Pawn victim, int complexOffset)
         {
-            foreach (BodyPartRecord part in bodyPartRecord)
+            int craftSkill = victim.skills.GetSkill(SkillDefOf.Crafting).levelInt;
+            //int randChance = 30;
+            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(ClassesDefOf.Finger);
+            List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
+            List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
+            List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
+            List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
+            targetParts.AddRange(fingerParts);
+            targetParts.AddRange(handParts);
+            targetParts.AddRange(armParts);
+            targetParts.AddRange(eyeParts);
+            HediffSet pawnParts = victim.health.hediffSet;
+            List<BodyPartRecord> hasParts = new List<BodyPartRecord>();
+            foreach (BodyPartRecord part in targetParts)
             {
-                if (!hediffSet.PartIsMissing(part))
+                if (!pawnParts.PartIsMissing(part))
                 {
-                    yield return part;
+                    hasParts.Add(part);
                 }
             }
+            if (hasParts.Any())
+            {
+                BodyPartRecord selectPart = hasParts.RandomElement();
+                if (randChance > 20)
+                {
+                    Hediff hediffRemove = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
+                    hediffRemove.Severity = 50;
+                    if (fingerParts.Contains(selectPart))
+                    {
+                        Messages.Message("Finger", MessageTypeDefOf.NegativeEvent, true);
+                    }
+                    if (handParts.Contains(selectPart))
+                    {
+                        Messages.Message("Hand", MessageTypeDefOf.NegativeEvent, true);
+                    }
+                    if (armParts.Contains(selectPart))
+                    {
+                        Messages.Message("Arm", MessageTypeDefOf.NegativeEvent, true);
+                    }
+                    if (eyeParts.Contains(selectPart))
+                    {
+                        Messages.Message("Eye", MessageTypeDefOf.NegativeEvent, true);
+                    }
+                    victim.health.AddHediff(hediffRemove, selectPart);
+                    victim.jobs.StopAll();
+                    return true;
+                }
+                if (randChance > 15)
+                {
+                    Hediff hediffCrush = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
+                    hediffCrush.Severity = Rand.Range(5f, randChance);
+                    victim.health.AddHediff(hediffCrush, selectPart);
+                    victim.jobs.StopAll();
+                    return true;
+                }
+                if (randChance > 10)
+                {
+                    Hediff hediffCuts = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                    hediffCuts.Severity = Rand.Range(5f, randChance);
+                    victim.health.AddHediff(hediffCuts, selectPart);
+                    victim.jobs.StopAll();
+                    return true;
+                }
+                if (randChance > 5)
+                {
+                    Hediff hediffCrush = HediffMaker.MakeHediff(ClassesDefOf.Crush, victim);
+                    hediffCrush.Severity = Rand.Range(1f, 5f);
+                    victim.health.AddHediff(hediffCrush, selectPart);
+                    victim.jobs.StopAll();
+                    return true;
+                }
+                Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                hediffCut.Severity = Rand.Range(1f, 5f);
+                victim.health.AddHediff(hediffCut, selectPart);
+                victim.jobs.StopAll();
+                return true;
+            }
+            return false;
+        }
+        public static bool CookingAccident(Pawn victim, int complexOffset)
+        {
+            return true;
+        }
+        public static bool ButcheryAccident(Pawn victim, int complexOffset)
+        {
+            return true;
+        }
+        public static bool MethLabAccident(Pawn victim, int complexOffset)
+        {
+            return true;
+        }
+        public static bool ChemicalAccident(Pawn victim, int complexOffset)
+        {
+            return true;
+        }
+        public static bool ChemfuelAccident(Pawn victim, int complexOffset)
+        {
+            return true;
+        }
+        public static bool SewingAccident(Pawn victim, int complexOffset)
+        {
+            return true;
         }
     }
 }
