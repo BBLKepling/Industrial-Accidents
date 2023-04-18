@@ -43,7 +43,7 @@
       </li>
     </value>
   </Operation>
-
+<!--
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="BiofuelRefinery"
@@ -55,7 +55,7 @@
       </li>
     </value>
   </Operation>
-
+-->
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="GoJuice" or 
