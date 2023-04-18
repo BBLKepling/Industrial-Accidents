@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="FueledSmithy" or 
+      defName="ElectricSmithy" or 
+      defName="TableMachining" or 
+      defName="ElectricSmelter" or 
+      defName="FabricationBench"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>industrial</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="CraftingSpot" or 
+      defName="TableSculpting" or 
+      defName="TableStonecutter"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>neolithic</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="ElectricStove" or 
+      defName="FueledStove"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>cooking</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="BiofuelRefinery"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>chemfuel</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="GoJuice" or 
+      defName="WakeUp"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>10</complexity>
+        <accidentType>Methlab</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>

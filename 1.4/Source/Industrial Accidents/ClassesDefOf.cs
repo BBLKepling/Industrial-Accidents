@@ -8,8 +8,11 @@ namespace Industrial_Accidents
     {
         public static HediffDef Crush;
         public static HediffDef ChemicalBurn;
+        public static BodyPartDef Ear;
+        public static BodyPartDef Tongue;
         public static BodyPartDef Finger;
         public static BodyPartDef Toe;
+        public static BodyPartDef Foot;
 
         static ClassesDefOf()
         {

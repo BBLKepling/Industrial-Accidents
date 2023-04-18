@@ -1,0 +1,8 @@
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\Source\Industrial Accidents\obj\Release\Industrial_Accidents.csproj.AssemblyReference.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\Source\Industrial Accidents\obj\Release\Industrial_Accidents.csproj.CoreCompileInputs.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\Assemblies\Industrial_Accidents.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\Source\Industrial Accidents\obj\Release\Industrial_Accidents.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\1.4\Assemblies\Industrial_Accidents.dll
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\1.4\Source\Industrial Accidents\obj\Release\Industrial_Accidents.csproj.AssemblyReference.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\1.4\Source\Industrial Accidents\obj\Release\Industrial_Accidents.csproj.CoreCompileInputs.cache
+C:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\Industrial Accidents\1.4\Source\Industrial Accidents\obj\Release\Industrial_Accidents.dll
