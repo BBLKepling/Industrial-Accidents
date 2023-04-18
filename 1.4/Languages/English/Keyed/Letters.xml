@@ -13,6 +13,7 @@
   <!-- Cooking -->
   <BBLK_GreaseFire>{VICTIM_labelShort} started a grease fire at {BUILDING_label} and tried to put it out with water.</BBLK_GreaseFire>
   <BBLK_CookBurn>{VICTIM_labelShort} had an accident at {BUILDING_label} and burned their {PART_label}.</BBLK_CookBurn>
+  <BBLK_ExplosionSpice>{VICTIM_labelShort} tried adding a new spice they found not realizing it was toxic, quickly boiling over onto the burner it created a toxic smoke cloud at {BUILDING_label}.</BBLK_ExplosionSpice>
   
   <!-- Chemical -->
   <BBLK_ChemBurn>{VICTIM_labelShort} was careless with chemicals at {BUILDING_label} and burned their {PART_label}.</BBLK_ChemBurn>

@@ -431,6 +431,13 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
+            if (randChance > 15 && ModsConfig.BiotechActive)
+            {
+                GenExplosion.DoExplosion(radius: 5.9f, center: building.Position, map: building.Map, damType: DamageDefOf.ToxGas, instigator: building, damAmount: -1, armorPenetration: -1f, explosionSound: null, weapon: null, projectile: null, intendedTarget: null, postExplosionSpawnThingDef: null, postExplosionSpawnChance: 0f, postExplosionSpawnThingCount: 1, postExplosionGasType: GasType.ToxGas);
+                Find.LetterStack.ReceiveLetter("BBLK_IAccidentLabel".Translate(), "BBLK_ExplosionSpice".Translate(victim.LabelShort, victim.Named("VICTIM"), building.Label, building.Named("BUILDING")), LetterDefOf.NegativeEvent, new TargetInfo(victim.Position, victim.Map));
+                victim.jobs.StopAll();
+                return true;
+            }
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(ClassesDefOf.Finger);
             List<BodyPartRecord> tongueParts = victim.def.race.body.GetPartsWithDef(ClassesDefOf.Tongue);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
