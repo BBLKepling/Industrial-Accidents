@@ -1,5 +1,6 @@
 <loadFolders>
   <v1.4>
+      <li IfModActive="Dubwise.DubsBadHygiene">1.4/Mods/DBH</li>
     <li>1.4</li>
   </v1.4>
 </loadFolders>

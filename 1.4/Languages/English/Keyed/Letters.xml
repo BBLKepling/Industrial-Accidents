@@ -22,5 +22,6 @@
   <BBLK_ExplosionBomb>{VICTIM_labelShort} had an accident at {BUILDING_label} and caused an explosion.</BBLK_ExplosionBomb>
   <BBLK_ExplosionToxic>{VICTIM_labelShort} had an accident at {BUILDING_label} and created a toxic smoke cloud.</BBLK_ExplosionToxic>
   <BBLK_ExplosionSmoke>{VICTIM_labelShort} had an accident at {BUILDING_label} and created a smoke cloud.</BBLK_ExplosionSmoke>
+  <BBLK_ExplosionMech>{VICTIM_labelShort} had an accident at {BUILDING_label} dismantling a mechanoid and created an EMP blast.</BBLK_ExplosionMech>
   
 </LanguageData>

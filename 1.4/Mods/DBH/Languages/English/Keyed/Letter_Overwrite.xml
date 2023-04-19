@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <!-- Cooking -->
+  <BBLK_ExplosionSpice>{VICTIM_labelShort} tried adding a mushroom they found growing in the bathroom not realizing it was toxic, quickly boiling over onto the burner it created a toxic smoke cloud at {BUILDING_label}.</BBLK_ExplosionSpice>
+  <!-- Bludgeoning Angel Dokuro-chan Reference -->
+</LanguageData>

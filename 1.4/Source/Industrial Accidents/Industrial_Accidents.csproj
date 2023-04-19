@@ -49,7 +49,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClassesDefOf.cs" />
+    <Compile Include="IAccidentDefOf.cs" />
     <Compile Include="IAccidentModExtension.cs" />
     <Compile Include="IAccidentUtility.cs" />
     <Compile Include="IncidentWorker_IAccident.cs" />
