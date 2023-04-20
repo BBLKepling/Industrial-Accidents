@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Patch>
-<!-- Production Table Examples 
+<!-- Production Table Examples -->
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="FueledSmithy" or 
@@ -25,7 +25,7 @@
       </li>
     </value>
   </Operation>
--->
+
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="TableMachining"
@@ -71,7 +71,7 @@
       <li Class="Industrial_Accidents.IAccidentModExtension">
         <complexity>0</complexity>
         <accidentType>neolithic</accidentType>
-        <skillDef>Artistic</skillDef><!-- over write the default skill -->
+        <skillDef>Artistic</skillDef><!-- overwrite the default skill -->
       </li>
     </value>
   </Operation>
@@ -88,7 +88,31 @@
       </li>
     </value>
   </Operation>
-<!--
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="SimpleResearchBench"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>0</complexity>
+        <accidentType>indresearch</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/ThingDef[
+      defName="HiTechResearchBench"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>0</complexity>
+        <accidentType>spaceresearch</accidentType>
+      </li>
+    </value>
+  </Operation>
+
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="BiofuelRefinery"
@@ -100,7 +124,6 @@
       </li>
     </value>
   </Operation>
--->
 <!-- Recipe Product Examples -->
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
@@ -110,11 +133,11 @@
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
         <complexity>10</complexity>
-        <accidentType>Methlab</accidentType>
+        <accidentType>methlab</accidentType>
       </li>
     </value>
   </Operation>
-<!-- RecipeDef Examples 
+<!-- RecipeDef Examples -->
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/RecipeDef[
       defName="ButcherCorpseFlesh"
@@ -126,7 +149,7 @@
       </li>
     </value>
   </Operation>
--->
+
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/RecipeDef[
       @Name="ButcherCorpseMechanoidBase"
