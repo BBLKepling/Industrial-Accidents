@@ -13,48 +13,44 @@ namespace Industrial_Accidents
             List<Thing> workingPawns = map.listerThings.AllThings;
             for (int i = 0; i < workingPawns.Count; i++)
             {
-                if (workingPawns[i] is Pawn)
+                if (!(workingPawns[i] is Pawn)) { continue; }
+                Pawn pawn = (Pawn)workingPawns[i];
+                if (!pawn.IsColonist) { continue; }
+                if (ModLister.HasActiveModWithName("Research Reinvented"))
                 {
-                    Pawn pawn = (Pawn)workingPawns[i];
-                    if (pawn.IsColonist && (pawn.jobs.curJob?.def == JobDefOf.DoBill || pawn.jobs.curJob?.def == JobDefOf.Research))
+                    if (!(pawn.jobs.curJob?.def == JobDefOf.DoBill) && !(pawn.jobs.curJob?.def == JobDefOf.Research) && !(pawn.jobs.curJob?.def == IAccidentDefOf.RR_Research)) { continue; }
+                }
+                else
+                {
+                    if (!(pawn.jobs.curJob?.def == JobDefOf.DoBill) && !(pawn.jobs.curJob?.def == JobDefOf.Research)) { continue; }
+                }
+                Building building = (Building)pawn.jobs.curJob.GetTarget(TargetIndex.A);
+                if (building == null) { continue; }
+                if ((pawn.Position - building.Position).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                if (building.def.HasModExtension<IAccidentModExtension>())
+                {
+                    if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                     {
-                        Building building = (Building)pawn.jobs.curJob.GetTarget(TargetIndex.A);
-                        if (building != null)
+                        yield return pawn;
+                    }
+                }
+                if (pawn.jobs.curJob.RecipeDef == null) { continue; }
+                if (pawn.jobs.curJob.RecipeDef.HasModExtension<IAccidentModExtension>())
+                {
+                    if (pawn.jobs.curJob.RecipeDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    {
+                        yield return pawn;
+                    }
+                }
+                if (pawn.jobs.curJob.RecipeDef.products.NullOrEmpty()) { continue; }
+                List<ThingDefCountClass> productList = pawn.jobs.curJob.RecipeDef.products;
+                for (int q = 0; q < productList.Count; q++)
+                {
+                    if (productList[q].thingDef.HasModExtension<IAccidentModExtension>())
+                    {
+                        if (productList[q].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
                         {
-                            if ((pawn.Position - building.Position).ToVector3().MagnitudeHorizontal() < 3)
-                            {
-                                if (building.def.HasModExtension<IAccidentModExtension>())
-                                {
-                                    if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
-                                    {
-                                        yield return pawn;
-                                    }
-                                }
-                                if (pawn.jobs.curJob.RecipeDef != null)
-                                {
-                                    if (pawn.jobs.curJob.RecipeDef.HasModExtension<IAccidentModExtension>())
-                                    {
-                                        if (pawn.jobs.curJob.RecipeDef.GetModExtension<IAccidentModExtension>().accidentType != null)
-                                        {
-                                            yield return pawn;
-                                        }
-                                    }
-                                    if (!pawn.jobs.curJob.RecipeDef.products.NullOrEmpty())
-                                    {
-                                        List<ThingDefCountClass> productList = pawn.jobs.curJob.RecipeDef.products;
-                                        for (int q = 0; q < productList.Count; q++)
-                                        {
-                                            if (productList[q].thingDef.HasModExtension<IAccidentModExtension>())
-                                            {
-                                                if (productList[q].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
-                                                {
-                                                    yield return pawn;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            yield return pawn;
                         }
                     }
                 }
@@ -124,55 +120,36 @@ namespace Industrial_Accidents
                     }
                 }
             }
+            //int manipOffset = (int)victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
+            //Messages.Message("int:" + manipOffset, victim, MessageTypeDefOf.NegativeEvent);
             accType = accType.ToLower();
             // Accidents
-            if (accType == "industrial")
+            switch (accType)
             {
-                return IAccidents.IndustrialAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "medieval")
-            {
-                return IAccidents.MedievalAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "neolithic")
-            {
-                return IAccidents.NeolithicAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "cooking")
-            {
-                return IAccidents.CookingAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "butchery")
-            {
-                return IAccidents.ButcheryAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "mechanoid")
-            {
-                return IAccidents.MechanoidAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "methlab")
-            {
-                return IAccidents.MethLabAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "chemical")
-            {
-                return IAccidents.ChemicalAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "chemfuel")
-            {
-                return IAccidents.ChemfuelAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "sewing")
-            {
-                return IAccidents.SewingAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "indresearch")
-            {
-                return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride);
-            }
-            if (accType == "spaceresearch")
-            {
-                return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride);
+                case "industrial":
+                    return IAccidents.IndustrialAccident(victim, complexOffset, skillOverride);
+                case "medieval":
+                    return IAccidents.MedievalAccident(victim, complexOffset, skillOverride);
+                case "neolithic":
+                    return IAccidents.NeolithicAccident(victim, complexOffset, skillOverride);
+                case "cooking":
+                    return IAccidents.CookingAccident(victim, complexOffset, skillOverride);
+                case "butchery":
+                    return IAccidents.ButcheryAccident(victim, complexOffset, skillOverride);
+                case "mechanoid":
+                    return IAccidents.MechanoidAccident(victim, complexOffset, skillOverride);
+                case "methlab":
+                    return IAccidents.MethLabAccident(victim, complexOffset, skillOverride);
+                case "chemical":
+                    return IAccidents.ChemicalAccident(victim, complexOffset, skillOverride);
+                case "chemfuel":
+                    return IAccidents.ChemfuelAccident(victim, complexOffset, skillOverride);
+                case "sewing":
+                    return IAccidents.SewingAccident(victim, complexOffset, skillOverride);
+                case "indresearch":
+                    return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride);
+                case "spaceresearch":
+                    return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride);
             }
             // Error Reporting
             if (
@@ -180,8 +157,8 @@ namespace Industrial_Accidents
                 accType != "medieval" &&
                 accType != "neolithic" &&
                 accType != "cooking" &&
-                accType != "butchery" && 
-                accType != "mechanoid" && 
+                accType != "butchery" &&
+                accType != "mechanoid" &&
                 accType != "methlab" &&
                 accType != "chemical" &&
                 accType != "chemfuel" &&
@@ -196,13 +173,13 @@ namespace Industrial_Accidents
                     if (building.def.HasModExtension<IAccidentModExtension>())
                     {
                         string errorBuilding = building.def.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorBuilding != null && 
+                        if (errorBuilding != null &&
                             errorBuilding != "industrial" &&
                             errorBuilding != "medieval" &&
                             errorBuilding != "neolithic" &&
                             errorBuilding != "cooking" &&
-                            errorBuilding != "butchery" && 
-                            errorBuilding != "mechanoid" && 
+                            errorBuilding != "butchery" &&
+                            errorBuilding != "mechanoid" &&
                             errorBuilding != "methlab" &&
                             errorBuilding != "chemical" &&
                             errorBuilding != "chemfuel" &&
@@ -219,13 +196,13 @@ namespace Industrial_Accidents
                     if (productThingDef.HasModExtension<IAccidentModExtension>())
                     {
                         string errorThingDef = productThingDef.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorThingDef != null && 
-                            errorThingDef != "industrial" && 
+                        if (errorThingDef != null &&
+                            errorThingDef != "industrial" &&
                             errorThingDef != "medieval" &&
                             errorThingDef != "neolithic" &&
                             errorThingDef != "cooking" &&
                             errorThingDef != "butchery" &&
-                            errorThingDef != "mechanoid" && 
+                            errorThingDef != "mechanoid" &&
                             errorThingDef != "methlab" &&
                             errorThingDef != "chemical" &&
                             errorThingDef != "chemfuel" &&
@@ -242,13 +219,13 @@ namespace Industrial_Accidents
                     if (recipe.HasModExtension<IAccidentModExtension>())
                     {
                         string errorRecipeDef = recipe.GetModExtension<IAccidentModExtension>().accidentType;
-                        if (errorRecipeDef != null && 
-                            errorRecipeDef != "industrial" && 
+                        if (errorRecipeDef != null &&
+                            errorRecipeDef != "industrial" &&
                             errorRecipeDef != "medieval" &&
                             errorRecipeDef != "neolithic" &&
                             errorRecipeDef != "cooking" &&
-                            errorRecipeDef != "butchery" && 
-                            errorRecipeDef != "mechanoid" && 
+                            errorRecipeDef != "butchery" &&
+                            errorRecipeDef != "mechanoid" &&
                             errorRecipeDef != "methlab" &&
                             errorRecipeDef != "chemical" &&
                             errorRecipeDef != "chemfuel" &&

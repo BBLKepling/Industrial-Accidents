@@ -18,6 +18,8 @@ namespace Industrial_Accidents
         [MayRequire("conit.thebirdsandthebees")]
         public static BodyPartDef ReproductiveOrgans;
 
+        [MayRequire("PeteTimesSix.ResearchReinvented")]
+        public static JobDef RR_Research;
         static IAccidentDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(IAccidentDefOf));

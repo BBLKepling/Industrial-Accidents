@@ -871,14 +871,29 @@ namespace Industrial_Accidents
             if (randChance > 20)
             {
                 GenExplosion.DoExplosion(
+                    radius: 5.9f,
+                    center: building.Position,
+                    map: building.Map,
+                    damType: DamageDefOf.Flame,
+                    instigator: building);
+                GenExplosion.DoExplosion(
                     radius: 3.9f,
                     center: building.Position,
                     map: building.Map,
                     damType: DamageDefOf.Bomb,
-                    instigator: building);
+                    instigator: building,
+                    damAmount: -1,
+                    armorPenetration: -1f,
+                    explosionSound: null,
+                    weapon: null,
+                    projectile: null,
+                    intendedTarget: null,
+                    postExplosionSpawnThingDef: ThingDefOf.Fire,
+                    postExplosionSpawnChance: 0.25f,
+                    postExplosionSpawnThingCount: 1);
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionBomb".Translate(
+                    "BBLK_ExplosionMethLab".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
@@ -920,21 +935,11 @@ namespace Industrial_Accidents
                     radius: 5.9f,
                     center: building.Position,
                     map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
+                    damType: DamageDefOf.Flame,
+                    instigator: building);
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
+                    "BBLK_ExplosionBomb".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
