@@ -53,7 +53,22 @@ namespace Industrial_Accidents
                 Hediff hediffShred = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
                 Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 20)
+                if (randChance > 25 && IAccidentSettings.lethal)
+                {
+                    Thing meat = GenSpawn.Spawn(ThingDefOf.Meat_Human, victim.Position, victim.Map);
+                    meat.stackCount = 75;
+                    Find.LetterStack.ReceiveLetter(
+                        "BBLK_IAccidentLabel".Translate(),
+                        "BBLK_IndSuck".Translate(
+                            victim.LabelShort, victim.Named("VICTIM"),
+                            building.Label, building.Named("BUILDING")),
+                        LetterDefOf.NegativeEvent,
+                        new TargetInfo(victim.Position, victim.Map));
+                    victim.Kill(null, null);
+                    victim.Corpse.DeSpawn();
+                    return true;
+                }
+                if (randChance > 20 && IAccidentSettings.catastrophic)
                 {
                     if (armParts.Contains(selectPart) || junkParts.Contains(selectPart))
                     {

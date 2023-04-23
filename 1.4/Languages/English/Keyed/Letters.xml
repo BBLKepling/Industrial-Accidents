@@ -10,6 +10,7 @@
   <BBLK_IndCrush>{VICTIM_labelShort} had an accident at {BUILDING_label} and smashed their {PART_label}.</BBLK_IndCrush>
   <BBLK_IndCut>{VICTIM_labelShort} had an accident at {BUILDING_label} and cut their {PART_label}.</BBLK_IndCut>
   <BBLK_IndStab>{VICTIM_labelShort} had an accident at {BUILDING_label} and stabbed their {PART_label}.</BBLK_IndStab>
+  <BBLK_IndSuck>{VICTIM_labelShort} got sucked into {BUILDING_label} and turned into mince meat.</BBLK_IndSuck>
   
   <!-- Cooking -->
   <BBLK_GreaseFire>{VICTIM_labelShort} started a grease fire at {BUILDING_label} and tried to put it out with water.</BBLK_GreaseFire>

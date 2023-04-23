@@ -52,6 +52,7 @@
     <Compile Include="IAccidentDefOf.cs" />
     <Compile Include="IAccidentModExtension.cs" />
     <Compile Include="IAccidents.cs" />
+    <Compile Include="IAccidentSettings.cs" />
     <Compile Include="IAccidentUtility.cs" />
     <Compile Include="IncidentWorker_IAccident.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

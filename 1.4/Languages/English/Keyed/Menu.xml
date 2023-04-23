@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <BBLK_IAccidents_Settings>Industrial Accidents</BBLK_IAccidents_Settings>
+  
+  <BBLK_LethalExplanation>Can lethal accidents happen</BBLK_LethalExplanation>
+  <BBLK_LethalToolTip>Pawns can die</BBLK_LethalToolTip>
+  
+  <BBLK_CatastrophicExplanation>Can catastrophic accidents happen</BBLK_CatastrophicExplanation>
+  <BBLK_CatastrophicToolTip>Pawns can be maimed</BBLK_CatastrophicToolTip>
+  
+</LanguageData>

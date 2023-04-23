@@ -10,47 +10,45 @@ namespace Industrial_Accidents
         //CanFireNowSub
         public static IEnumerable<Pawn> GetWorkingPawns(Map map)
         {
-            List<Thing> workingPawns = map.listerThings.AllThings;
-            for (int i = 0; i < workingPawns.Count; i++)
+            List<Pawn> pawns = map.mapPawns.AllPawns;
+            for (int i = 0; i < pawns.Count; i++)
             {
-                if (!(workingPawns[i] is Pawn)) { continue; }
-                Pawn pawn = (Pawn)workingPawns[i];
-                if (!pawn.IsColonist) { continue; }
+                if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
                 if (ModLister.HasActiveModWithName("Research Reinvented"))
                 {
-                    if (!(pawn.jobs.curJob?.def == JobDefOf.DoBill) && !(pawn.jobs.curJob?.def == JobDefOf.Research) && !(pawn.jobs.curJob?.def == IAccidentDefOf.RR_Research)) { continue; }
+                    if (!(pawns[i].jobs.curJob?.def == JobDefOf.DoBill) && !(pawns[i].jobs.curJob?.def == JobDefOf.Research) && !(pawns[i].jobs.curJob?.def == IAccidentDefOf.RR_Research)) { continue; }
                 }
                 else
                 {
-                    if (!(pawn.jobs.curJob?.def == JobDefOf.DoBill) && !(pawn.jobs.curJob?.def == JobDefOf.Research)) { continue; }
+                    if (!(pawns[i].jobs.curJob?.def == JobDefOf.DoBill) && !(pawns[i].jobs.curJob?.def == JobDefOf.Research)) { continue; }
                 }
-                Building building = (Building)pawn.jobs.curJob.GetTarget(TargetIndex.A);
+                Building building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
                 if (building == null) { continue; }
-                if ((pawn.Position - building.Position).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                if ((pawns[i].Position - building.Position).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
                     if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                     {
-                        yield return pawn;
+                        yield return pawns[i];
                     }
                 }
-                if (pawn.jobs.curJob.RecipeDef == null) { continue; }
-                if (pawn.jobs.curJob.RecipeDef.HasModExtension<IAccidentModExtension>())
+                if (pawns[i].jobs.curJob.RecipeDef == null) { continue; }
+                if (pawns[i].jobs.curJob.RecipeDef.HasModExtension<IAccidentModExtension>())
                 {
-                    if (pawn.jobs.curJob.RecipeDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    if (pawns[i].jobs.curJob.RecipeDef.GetModExtension<IAccidentModExtension>().accidentType != null)
                     {
-                        yield return pawn;
+                        yield return pawns[i];
                     }
                 }
-                if (pawn.jobs.curJob.RecipeDef.products.NullOrEmpty()) { continue; }
-                List<ThingDefCountClass> productList = pawn.jobs.curJob.RecipeDef.products;
+                if (pawns[i].jobs.curJob.RecipeDef.products.NullOrEmpty()) { continue; }
+                List<ThingDefCountClass> productList = pawns[i].jobs.curJob.RecipeDef.products;
                 for (int q = 0; q < productList.Count; q++)
                 {
                     if (productList[q].thingDef.HasModExtension<IAccidentModExtension>())
                     {
                         if (productList[q].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
                         {
-                            yield return pawn;
+                            yield return pawns[i];
                         }
                     }
                 }
@@ -121,7 +119,6 @@ namespace Industrial_Accidents
                 }
             }
             //int manipOffset = (int)victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
-            //Messages.Message("int:" + manipOffset, victim, MessageTypeDefOf.NegativeEvent);
             accType = accType.ToLower();
             // Accidents
             switch (accType)
