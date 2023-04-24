@@ -9,17 +9,48 @@ namespace Industrial_Accidents
     public static class IAccidents
     {
         //Accidents
-        public static bool IndustrialAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool IndustrialAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance =  Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && IAccidentSettings.lethal)
+            {
+                Thing meat = GenSpawn.Spawn(ThingDefOf.Meat_Human, building.Position, building.Map);
+                meat.stackCount = Rand.Range(30, 40);
+                Thing meats = GenSpawn.Spawn(ThingDefOf.Meat_Human, victim.Position, victim.Map);
+                meats.stackCount = Rand.Range(25, 35);
+                FilthMaker.TryMakeFilth(building.Position, building.Map, ThingDefOf.Filth_Blood, 5);
+                FilthMaker.TryMakeFilth(victim.Position, victim.Map, ThingDefOf.Filth_Blood, 5);
+                Find.LetterStack.ReceiveLetter(
+                    "BBLK_IAccidentLabel".Translate(),
+                    "BBLK_IndSuck".Translate(
+                        victim.LabelShort, victim.Named("VICTIM"),
+                        building.Label, building.Named("BUILDING")),
+                    LetterDefOf.NegativeEvent,
+                    new TargetInfo(victim.Position, victim.Map));
+                victim.Kill(null, null);
+                victim.Corpse.DeSpawn();
+                return true;
+            }
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
+            List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
+            List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
             List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
@@ -30,6 +61,8 @@ namespace Industrial_Accidents
             }
             List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
             targetParts.AddRange(fingerParts);
+            targetParts.AddRange(toeParts);
+            targetParts.AddRange(footParts);
             targetParts.AddRange(handParts);
             targetParts.AddRange(armParts);
             targetParts.AddRange(eyeParts);
@@ -53,22 +86,7 @@ namespace Industrial_Accidents
                 Hediff hediffShred = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
                 Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 25 && IAccidentSettings.lethal)
-                {
-                    Thing meat = GenSpawn.Spawn(ThingDefOf.Meat_Human, victim.Position, victim.Map);
-                    meat.stackCount = 75;
-                    Find.LetterStack.ReceiveLetter(
-                        "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndSuck".Translate(
-                            victim.LabelShort, victim.Named("VICTIM"),
-                            building.Label, building.Named("BUILDING")),
-                        LetterDefOf.NegativeEvent,
-                        new TargetInfo(victim.Position, victim.Map));
-                    victim.Kill(null, null);
-                    victim.Corpse.DeSpawn();
-                    return true;
-                }
-                if (randChance > 20 && IAccidentSettings.catastrophic)
+                if (randChance > 10 && IAccidentSettings.catastrophic)
                 {
                     if (armParts.Contains(selectPart) || junkParts.Contains(selectPart))
                     {
@@ -112,72 +130,13 @@ namespace Industrial_Accidents
                     victim.jobs.StopAll();
                     return true;
                 }
-                if (randChance > 15)
+                if (randChance > 6)
                 {
-                    if (fingerParts.Contains(selectPart) || junkParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    if (handParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, randChance - 5);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                }
-                if (randChance > 10)
-                {
-                    if (fingerParts.Contains(selectPart) || junkParts.Contains(selectPart))
-                    {
-                        hediffCut.Severity = Rand.Range(2f, 6f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCut".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    hediffCut.Severity = Rand.Range(5f, randChance);
-                    victim.health.AddHediff(hediffCut, selectPart);
-                    Find.LetterStack.ReceiveLetter(
-                        "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndCut".Translate(
-                            victim.LabelShort, victim.Named("VICTIM"),
-                            building.Label, building.Named("BUILDING"),
-                            part.label, part.Named("PART")),
-                        LetterDefOf.NegativeEvent,
-                        new TargetInfo(victim.Position, victim.Map));
-                    victim.jobs.StopAll();
-                    return true;
-                }
-                if (randChance > 5)
-                {
-                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart) || junkParts.Contains(selectPart))
+                    if (fingerParts.Contains(selectPart) || 
+                        handParts.Contains(selectPart) || 
+                        footParts.Contains(selectPart) || 
+                        toeParts.Contains(selectPart) || 
+                        junkParts.Contains(selectPart))
                     {
                         hediffCrush.Severity = Rand.Range(1f, 5f);
                         victim.health.AddHediff(hediffCrush, selectPart);
@@ -208,22 +167,36 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MedievalAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool MedievalAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
+            List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
+            List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
             List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
             List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
             targetParts.AddRange(fingerParts);
+            targetParts.AddRange(toeParts);
+            targetParts.AddRange(footParts);
             targetParts.AddRange(handParts);
             targetParts.AddRange(armParts);
             targetParts.AddRange(eyeParts);
@@ -242,15 +215,17 @@ namespace Industrial_Accidents
                 BodyPartDef part = selectPart.def;
                 Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 15)
+                Hediff hediffBurn = HediffMaker.MakeHediff(HediffDefOf.Burn, victim);
+                Hediff hediffShred = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
+                if (randChance > 10 && IAccidentSettings.catastrophic)
                 {
-                    if (fingerParts.Contains(selectPart))
+                    if (armParts.Contains(selectPart))
                     {
-                        hediffCrush.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
+                        hediffShred.Severity = 50;
+                        victim.health.AddHediff(hediffShred, selectPart);
                         Find.LetterStack.ReceiveLetter(
                             "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
+                            "BBLK_IndCataRip".Translate(
                                 victim.LabelShort, victim.Named("VICTIM"),
                                 building.Label, building.Named("BUILDING"),
                                 part.label, part.Named("PART")),
@@ -259,44 +234,25 @@ namespace Industrial_Accidents
                         victim.jobs.StopAll();
                         return true;
                     }
-                    if (handParts.Contains(selectPart))
+                    if (eyeParts.Contains(selectPart))
                     {
-                        hediffCrush.Severity = Rand.Range(3f, randChance - 5);
-                        victim.health.AddHediff(hediffCrush, selectPart);
+                        hediffShred.Severity = 50;
+                        victim.health.AddHediff(hediffShred, selectPart);
                         Find.LetterStack.ReceiveLetter(
                             "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
+                            "BBLK_IndCataEye".Translate(
                                 victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
+                                building.Label, building.Named("BUILDING")),
                             LetterDefOf.NegativeEvent,
                             new TargetInfo(victim.Position, victim.Map));
                         victim.jobs.StopAll();
                         return true;
                     }
-                }
-                if (randChance > 10)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCut.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCut".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    hediffCut.Severity = Rand.Range(5f, randChance);
+                    hediffCut.Severity = 50;
                     victim.health.AddHediff(hediffCut, selectPart);
                     Find.LetterStack.ReceiveLetter(
                         "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndCut".Translate(
+                        "BBLK_IndCataCut".Translate(
                             victim.LabelShort, victim.Named("VICTIM"),
                             building.Label, building.Named("BUILDING"),
                             part.label, part.Named("PART")),
@@ -305,15 +261,36 @@ namespace Industrial_Accidents
                     victim.jobs.StopAll();
                     return true;
                 }
-                if (randChance > 5)
+                if (randChance > 7)
                 {
-                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
+                    if (fingerParts.Contains(selectPart) || 
+                        handParts.Contains(selectPart) ||
+                        toeParts.Contains(selectPart) ||
+                        footParts.Contains(selectPart))
                     {
                         hediffCrush.Severity = Rand.Range(1f, 5f);
                         victim.health.AddHediff(hediffCrush, selectPart);
                         Find.LetterStack.ReceiveLetter(
                             "BBLK_IAccidentLabel".Translate(),
                             "BBLK_IndCrush".Translate(
+                                victim.LabelShort, victim.Named("VICTIM"),
+                                building.Label, building.Named("BUILDING"),
+                                part.label, part.Named("PART")),
+                            LetterDefOf.NegativeEvent,
+                            new TargetInfo(victim.Position, victim.Map));
+                        victim.jobs.StopAll();
+                        return true;
+                    }
+                }
+                if (randChance > 5)
+                {
+                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
+                    {
+                        hediffBurn.Severity = Rand.Range(1f, 5f);
+                        victim.health.AddHediff(hediffBurn, selectPart);
+                        Find.LetterStack.ReceiveLetter(
+                            "BBLK_IAccidentLabel".Translate(),
+                            "BBLK_CookBurn".Translate(
                                 victim.LabelShort, victim.Named("VICTIM"),
                                 building.Label, building.Named("BUILDING"),
                                 part.label, part.Named("PART")),
@@ -338,17 +315,29 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool NeolithicAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool NeolithicAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
+            List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
+            List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
             List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
@@ -356,6 +345,8 @@ namespace Industrial_Accidents
             targetParts.AddRange(fingerParts);
             targetParts.AddRange(handParts);
             targetParts.AddRange(armParts);
+            targetParts.AddRange(toeParts);
+            targetParts.AddRange(footParts);
             targetParts.AddRange(eyeParts);
             HediffSet pawnParts = victim.health.hediffSet;
             List<BodyPartRecord> hasParts = new List<BodyPartRecord>();
@@ -372,72 +363,12 @@ namespace Industrial_Accidents
                 BodyPartDef part = selectPart.def;
                 Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 15)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    if (handParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, randChance - 5);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                }
-                if (randChance > 10)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCut.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCut".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    hediffCut.Severity = Rand.Range(5f, randChance);
-                    victim.health.AddHediff(hediffCut, selectPart);
-                    Find.LetterStack.ReceiveLetter(
-                        "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndCut".Translate(
-                            victim.LabelShort, victim.Named("VICTIM"),
-                            building.Label, building.Named("BUILDING"),
-                            part.label, part.Named("PART")),
-                        LetterDefOf.NegativeEvent,
-                        new TargetInfo(victim.Position, victim.Map));
-                    victim.jobs.StopAll();
-                    return true;
-                }
                 if (randChance > 5)
                 {
-                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
+                    if (fingerParts.Contains(selectPart) || 
+                        handParts.Contains(selectPart) ||
+                        footParts.Contains(selectPart) ||
+                        toeParts.Contains(selectPart))
                     {
                         hediffCrush.Severity = Rand.Range(1f, 5f);
                         victim.health.AddHediff(hediffCrush, selectPart);
@@ -468,35 +399,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool CookingAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool CookingAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Cooking;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 18;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
-                GenExplosion.DoExplosion(
-                    radius: 1.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Flame,
-                    instigator: building);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_GreaseFire".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -517,6 +440,24 @@ namespace Industrial_Accidents
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_ExplosionSpice".Translate(
+                        victim.LabelShort, victim.Named("VICTIM"),
+                        building.Label, building.Named("BUILDING")),
+                    LetterDefOf.NegativeEvent,
+                    new TargetInfo(victim.Position, victim.Map));
+                victim.jobs.StopAll();
+                return true;
+            }
+            if (randChance > 10 && IAccidentSettings.catastrophic)
+            {
+                GenExplosion.DoExplosion(
+                    radius: 1.9f,
+                    center: building.Position,
+                    map: building.Map,
+                    damType: DamageDefOf.Flame,
+                    instigator: building);
+                Find.LetterStack.ReceiveLetter(
+                    "BBLK_IAccidentLabel".Translate(),
+                    "BBLK_GreaseFire".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
@@ -550,9 +491,9 @@ namespace Industrial_Accidents
                 BodyPartDef part = selectPart.def;
                 Hediff hediffBurn = HediffMaker.MakeHediff(HediffDefOf.Burn, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 10)
+                if (randChance > 5)
                 {
-                    if (fingerParts.Contains(selectPart))
+                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
                     {
                         hediffBurn.Severity = Rand.Range(3f, 7f);
                         victim.health.AddHediff(hediffBurn, selectPart);
@@ -567,18 +508,6 @@ namespace Industrial_Accidents
                         victim.jobs.StopAll();
                         return true;
                     }
-                    hediffBurn.Severity = Rand.Range(5f, randChance);
-                    victim.health.AddHediff(hediffBurn, selectPart);
-                    Find.LetterStack.ReceiveLetter(
-                        "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_CookBurn".Translate(
-                            victim.LabelShort, victim.Named("VICTIM"),
-                            building.Label, building.Named("BUILDING"),
-                            part.label, part.Named("PART")),
-                        LetterDefOf.NegativeEvent,
-                        new TargetInfo(victim.Position, victim.Map));
-                    victim.jobs.StopAll();
-                    return true;
                 }
                 hediffCut.Severity = Rand.Range(1f, 5f);
                 victim.health.AddHediff(hediffCut, selectPart);
@@ -595,16 +524,26 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ButcheryAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool ButcheryAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
-                skillDef = SkillDefOf.Crafting;
+                skillDef = SkillDefOf.Cooking;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
@@ -627,17 +566,17 @@ namespace Industrial_Accidents
             {
                 BodyPartRecord selectPart = hasParts.RandomElement();
                 BodyPartDef part = selectPart.def;
-                Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
+                Hediff hediffShred = HediffMaker.MakeHediff(HediffDefOf.Shredded, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 15)
+                if (randChance > 10 && IAccidentSettings.catastrophic)
                 {
-                    if (fingerParts.Contains(selectPart))
+                    if (armParts.Contains(selectPart))
                     {
-                        hediffCrush.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
+                        hediffShred.Severity = 50;
+                        victim.health.AddHediff(hediffShred, selectPart);
                         Find.LetterStack.ReceiveLetter(
                             "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
+                            "BBLK_IndCataRip".Translate(
                                 victim.LabelShort, victim.Named("VICTIM"),
                                 building.Label, building.Named("BUILDING"),
                                 part.label, part.Named("PART")),
@@ -646,44 +585,25 @@ namespace Industrial_Accidents
                         victim.jobs.StopAll();
                         return true;
                     }
-                    if (handParts.Contains(selectPart))
+                    if (eyeParts.Contains(selectPart))
                     {
-                        hediffCrush.Severity = Rand.Range(3f, randChance - 5);
-                        victim.health.AddHediff(hediffCrush, selectPart);
+                        hediffShred.Severity = 50;
+                        victim.health.AddHediff(hediffShred, selectPart);
                         Find.LetterStack.ReceiveLetter(
                             "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
+                            "BBLK_IndCataEye".Translate(
                                 victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
+                                building.Label, building.Named("BUILDING")),
                             LetterDefOf.NegativeEvent,
                             new TargetInfo(victim.Position, victim.Map));
                         victim.jobs.StopAll();
                         return true;
                     }
-                }
-                if (randChance > 10)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCut.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCut".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    hediffCut.Severity = Rand.Range(5f, randChance);
+                    hediffCut.Severity = 50;
                     victim.health.AddHediff(hediffCut, selectPart);
                     Find.LetterStack.ReceiveLetter(
                         "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndCut".Translate(
+                        "BBLK_IndCataCut".Translate(
                             victim.LabelShort, victim.Named("VICTIM"),
                             building.Label, building.Named("BUILDING"),
                             part.label, part.Named("PART")),
@@ -691,24 +611,6 @@ namespace Industrial_Accidents
                         new TargetInfo(victim.Position, victim.Map));
                     victim.jobs.StopAll();
                     return true;
-                }
-                if (randChance > 5)
-                {
-                    if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(1f, 5f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
                 }
                 hediffCut.Severity = Rand.Range(1f, 5f);
                 victim.health.AddHediff(hediffCut, selectPart);
@@ -725,17 +627,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MechanoidAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool MechanoidAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 10 && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -777,69 +689,6 @@ namespace Industrial_Accidents
                 BodyPartDef part = selectPart.def;
                 Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
-                if (randChance > 15)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    if (handParts.Contains(selectPart))
-                    {
-                        hediffCrush.Severity = Rand.Range(3f, randChance - 5);
-                        victim.health.AddHediff(hediffCrush, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCrush".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                }
-                if (randChance > 10)
-                {
-                    if (fingerParts.Contains(selectPart))
-                    {
-                        hediffCut.Severity = Rand.Range(3f, 7f);
-                        victim.health.AddHediff(hediffCut, selectPart);
-                        Find.LetterStack.ReceiveLetter(
-                            "BBLK_IAccidentLabel".Translate(),
-                            "BBLK_IndCut".Translate(
-                                victim.LabelShort, victim.Named("VICTIM"),
-                                building.Label, building.Named("BUILDING"),
-                                part.label, part.Named("PART")),
-                            LetterDefOf.NegativeEvent,
-                            new TargetInfo(victim.Position, victim.Map));
-                        victim.jobs.StopAll();
-                        return true;
-                    }
-                    hediffCut.Severity = Rand.Range(5f, randChance);
-                    victim.health.AddHediff(hediffCut, selectPart);
-                    Find.LetterStack.ReceiveLetter(
-                        "BBLK_IAccidentLabel".Translate(),
-                        "BBLK_IndCut".Translate(
-                            victim.LabelShort, victim.Named("VICTIM"),
-                            building.Label, building.Named("BUILDING"),
-                            part.label, part.Named("PART")),
-                        LetterDefOf.NegativeEvent,
-                        new TargetInfo(victim.Position, victim.Map));
-                    victim.jobs.StopAll();
-                    return true;
-                }
                 if (randChance > 5)
                 {
                     if (fingerParts.Contains(selectPart) || handParts.Contains(selectPart))
@@ -873,17 +722,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MethLabAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool MethLabAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 150 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -916,7 +775,7 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
+            if (randChance > 10 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -937,24 +796,6 @@ namespace Industrial_Accidents
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_ExplosionToxic".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 10)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Flame,
-                    instigator: building);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionBomb".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
@@ -1034,17 +875,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ChemicalAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool ChemicalAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
-                skillDef = SkillDefOf.Intellectual;
+                skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
                     radius: 3.9f,
@@ -1062,7 +913,7 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
+            if (randChance > 10 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -1083,34 +934,6 @@ namespace Industrial_Accidents
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_ExplosionToxic".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 10)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
@@ -1190,17 +1013,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ChemfuelAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool ChemfuelAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
                     radius: 3.9f,
@@ -1218,90 +1051,6 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.ToxGas,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1f,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: null,
-                    postExplosionSpawnChance: 0f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.ToxGas);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionToxic".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 10)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 5)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
             List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
             targetParts.AddRange(victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger));
             targetParts.AddRange(victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe));
@@ -1346,16 +1095,26 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool SewingAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool SewingAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
@@ -1424,17 +1183,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool IndResearchAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool IndResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
                     radius: 3.9f,
@@ -1452,7 +1221,7 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
+            if (randChance > 10 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -1473,34 +1242,6 @@ namespace Industrial_Accidents
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_ExplosionToxic".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 10)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,
@@ -1580,17 +1321,27 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool SpaceResearchAccident(Pawn victim, int complexOffset, SkillDef skillDef)
+        public static bool SpaceResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            int craftSkill = victim.skills.GetSkill(skillDef).levelInt;
-            //int randChance = 30;
-            int randChance = Rand.Range(1, 20) + complexOffset - craftSkill;
-            if (randChance > 20)
+            float craftSkill;
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                craftSkill = 2.0f;
+            }
+            else
+            {
+                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
+            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
                     radius: 3.9f,
@@ -1608,7 +1359,7 @@ namespace Industrial_Accidents
                 victim.jobs.StopAll();
                 return true;
             }
-            if (randChance > 15 && ModsConfig.BiotechActive)
+            if (randChance > 10 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
                     radius: 5.9f,
@@ -1629,34 +1380,6 @@ namespace Industrial_Accidents
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_ExplosionToxic".Translate(
-                        victim.LabelShort, victim.Named("VICTIM"),
-                        building.Label, building.Named("BUILDING")),
-                    LetterDefOf.NegativeEvent,
-                    new TargetInfo(victim.Position, victim.Map));
-                victim.jobs.StopAll();
-                return true;
-            }
-            if (randChance > 10)
-            {
-                GenExplosion.DoExplosion(
-                    radius: 5.9f,
-                    center: building.Position,
-                    map: building.Map,
-                    damType: DamageDefOf.Smoke,
-                    instigator: building,
-                    damAmount: -1,
-                    armorPenetration: -1,
-                    explosionSound: null,
-                    weapon: null,
-                    projectile: null,
-                    intendedTarget: null,
-                    postExplosionSpawnThingDef: ThingDefOf.Filth_Ash,
-                    postExplosionSpawnChance: 0.5f,
-                    postExplosionSpawnThingCount: 1,
-                    postExplosionGasType: GasType.BlindSmoke);
-                Find.LetterStack.ReceiveLetter(
-                    "BBLK_IAccidentLabel".Translate(),
-                    "BBLK_ExplosionSmoke".Translate(
                         victim.LabelShort, victim.Named("VICTIM"),
                         building.Label, building.Named("BUILDING")),
                     LetterDefOf.NegativeEvent,

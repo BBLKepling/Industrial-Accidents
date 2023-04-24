@@ -5,7 +5,7 @@ namespace Industrial_Accidents
 {
     public class IAccidentModExtension : DefModExtension
     {
-        public int complexity = 0;
+        public float complexity = 0f;
         public string accidentType = null;
         public SkillDef skillDef = null;
     }

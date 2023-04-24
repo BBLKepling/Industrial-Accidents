@@ -65,7 +65,7 @@ namespace Industrial_Accidents
             SkillDef skillOverride = null;
             ThingDef productThingDef = null;
             string accType = null;
-            int complexOffset = 0;
+            float complexOffset = 0f;
             if (building.def.HasModExtension<IAccidentModExtension>())
             {
                 complexOffset += building.def.GetModExtension<IAccidentModExtension>().complexity;
@@ -118,7 +118,15 @@ namespace Industrial_Accidents
                     }
                 }
             }
-            //int manipOffset = (int)victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
+            if (victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation) > 2.0f)
+            {
+                //hard cap at 200%
+                complexOffset -= 2.0f;
+            }
+            else
+            {
+                complexOffset -= victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
+            }
             accType = accType.ToLower();
             // Accidents
             switch (accType)
