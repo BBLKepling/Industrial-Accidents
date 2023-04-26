@@ -16,12 +16,30 @@ namespace Industrial_Accidents
                 if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
                 if (pawns[i].jobs.curJob == null) { continue; }
                 if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                if (ModLister.HasActiveModWithName("Research Reinvented"))
+                {
+                    if (pawns[i].jobs.curJob.def == IAccidentDefOf.RR_Analyse)
+                    {
+                        if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.B).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                    }
+                }
                 if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
                 if (pawns[i].jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
                     yield return pawns[i];
                 }
-                Building building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
+                Building building = null;
+                if (ModLister.HasActiveModWithName("Research Reinvented"))
+                {
+                    if (pawns[i].jobs.curJob.def == IAccidentDefOf.RR_Analyse)
+                    {
+                        building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.B);
+                    }
+                }
+                if (building == null)
+                {
+                    building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
+                }
                 if (building == null) { continue; }
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
@@ -87,14 +105,28 @@ namespace Industrial_Accidents
                 accType = accType.ToLower();
             }
             // Job Accidents
+            // These don't involve buildings so we short cuircit here
             switch (accType)
             {
                 case "mining":
                     return IAccidents.MiningAccident(victim, complexOffset, skillOverride);
+                //case "analyseinplace":
+                    //return IAccidents.AnalyseInPlaceAccident(victim, complexOffset, skillOverride);
+                //case "analyseterrain":
+                    //return IAccidents.AnalyseTerrainAccident(victim, complexOffset, skillOverride);
             }
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
-            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
-            ThingDef productThingDef = null;
+            Building building = null;
+            if (ModLister.HasActiveModWithName("Research Reinvented"))
+            { 
+                if (victim.jobs.curJob.def == IAccidentDefOf.RR_Analyse)
+                {
+                    building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.B);
+                }
+            }
+            if (building == null)
+            {
+                building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
+            }
             if (building != null)
             {
                 if (building.def.HasModExtension<IAccidentModExtension>())
@@ -110,6 +142,8 @@ namespace Industrial_Accidents
                     }
                 }
             }
+            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
+            ThingDef productThingDef = null;
             if (recipe != null)
             {
                 if (!recipe.products.NullOrEmpty())
@@ -155,29 +189,29 @@ namespace Industrial_Accidents
             switch (accType)
             {
                 case "industrial":
-                    return IAccidents.IndustrialAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.IndustrialAccident(victim, complexOffset, skillOverride, building);
                 case "medieval":
-                    return IAccidents.MedievalAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.MedievalAccident(victim, complexOffset, skillOverride, building);
                 case "neolithic":
-                    return IAccidents.NeolithicAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.NeolithicAccident(victim, complexOffset, skillOverride, building);
                 case "cooking":
-                    return IAccidents.CookingAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.CookingAccident(victim, complexOffset, skillOverride, building);
                 case "butchery":
-                    return IAccidents.ButcheryAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.ButcheryAccident(victim, complexOffset, skillOverride, building);
                 case "mechanoid":
-                    return IAccidents.MechanoidAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.MechanoidAccident(victim, complexOffset, skillOverride, building);
                 case "methlab":
-                    return IAccidents.MethLabAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.MethLabAccident(victim, complexOffset, skillOverride, building);
                 case "chemical":
-                    return IAccidents.ChemicalAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.ChemicalAccident(victim, complexOffset, skillOverride, building);
                 case "chemfuel":
-                    return IAccidents.ChemfuelAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.ChemfuelAccident(victim, complexOffset, skillOverride, building);
                 case "sewing":
-                    return IAccidents.SewingAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.SewingAccident(victim, complexOffset, skillOverride, building);
                 case "indresearch":
-                    return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride, building);
                 case "spaceresearch":
-                    return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride);
+                    return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride, building);
             }
             // Error Reporting
             if (

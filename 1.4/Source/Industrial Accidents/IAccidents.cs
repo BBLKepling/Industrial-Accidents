@@ -93,9 +93,8 @@ namespace Industrial_Accidents
             return false;
         }
         //Building Accidents
-        public static bool IndustrialAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool IndustrialAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -250,9 +249,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MedievalAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool MedievalAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -397,9 +395,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool NeolithicAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool NeolithicAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -480,9 +477,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool CookingAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool CookingAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Cooking;
@@ -604,9 +600,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ButcheryAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool ButcheryAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Cooking;
@@ -706,9 +701,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MechanoidAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool MechanoidAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -800,9 +794,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool MethLabAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool MethLabAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
@@ -952,9 +945,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ChemicalAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool ChemicalAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -1089,9 +1081,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool ChemfuelAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool ChemfuelAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -1170,9 +1161,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool SewingAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool SewingAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Crafting;
@@ -1257,9 +1247,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool IndResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool IndResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
@@ -1394,9 +1383,8 @@ namespace Industrial_Accidents
             }
             return false;
         }
-        public static bool SpaceResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        public static bool SpaceResearchAccident(Pawn victim, float complexOffset, SkillDef skillDef, Building building)
         {
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             if (skillDef == null)
             {
                 skillDef = SkillDefOf.Intellectual;
