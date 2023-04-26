@@ -15,6 +15,7 @@ namespace Industrial_Accidents
             {
                 if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
                 if (pawns[i].jobs.curJob == null) { continue; }
+                if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
                 if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                 if (ModLister.HasActiveModWithName("Research Reinvented"))
                 {
@@ -23,7 +24,6 @@ namespace Industrial_Accidents
                         if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.B).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                     }
                 }
-                if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
                 if (pawns[i].jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
                     yield return pawns[i];
@@ -215,6 +215,7 @@ namespace Industrial_Accidents
             }
             // Error Reporting
             if (
+                accType != "mining" &&
                 accType != "industrial" &&
                 accType != "medieval" &&
                 accType != "neolithic" &&
