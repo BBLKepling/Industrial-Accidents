@@ -2,13 +2,16 @@
 <Patch>
 
   <Operation Class="PatchOperationAddModExtension">
-    <xpath>Defs/*[self::ThingDef or self::thingDef or self::RecipeDef or self::recipeDef or self::JobDef or self::jobDef]</xpath>
+    <xpath>Defs/ThingDef[
+      defName="GoJuice" or 
+      defName="WakeUp"
+    ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>2</complexity>
-        <accidentType>industrial</accidentType>
+        <complexity>5</complexity>
+        <accidentType>methlab</accidentType>
       </li>
     </value>
   </Operation>
-
+  
 </Patch>

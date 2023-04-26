@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/JobDef[
+      defName="DoBill" or 
+      defName="Research" or 
+      defName="RR_Research"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension" />
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/JobDef[
+      defName="Mine"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>2</complexity>
+        <accidentType>mining</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>

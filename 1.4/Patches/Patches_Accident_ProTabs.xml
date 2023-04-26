@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Patch>
-<!-- Production Table Examples -->
+
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/ThingDef[
       defName="FueledSmithy" or 
@@ -8,7 +8,7 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>2</complexity>
+        <complexity>1</complexity>
         <accidentType>medieval</accidentType>
       </li>
     </value>
@@ -20,7 +20,7 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>2</complexity>
+        <complexity>1</complexity>
         <accidentType>industrial</accidentType>
       </li>
     </value>
@@ -32,7 +32,7 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>5</complexity>
+        <complexity>2</complexity>
         <accidentType>industrial</accidentType>
       </li>
     </value>
@@ -44,7 +44,7 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>10</complexity>
+        <complexity>5</complexity>
         <accidentType>industrial</accidentType>
       </li>
     </value>
@@ -57,7 +57,6 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
         <accidentType>neolithic</accidentType>
       </li>
     </value>
@@ -69,7 +68,6 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
         <accidentType>neolithic</accidentType>
         <skillDef>Artistic</skillDef><!-- overwrite the default skill -->
       </li>
@@ -83,7 +81,6 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
         <accidentType>cooking</accidentType>
       </li>
     </value>
@@ -95,7 +92,6 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
         <accidentType>indresearch</accidentType>
       </li>
     </value>
@@ -107,7 +103,6 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
         <accidentType>spaceresearch</accidentType>
       </li>
     </value>
@@ -119,45 +114,8 @@
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>2</complexity>
+        <complexity>1</complexity>
         <accidentType>chemfuel</accidentType>
-      </li>
-    </value>
-  </Operation>
-<!-- Recipe Product Examples -->
-  <Operation Class="PatchOperationAddModExtension">
-    <xpath>Defs/ThingDef[
-      defName="GoJuice" or 
-      defName="WakeUp"
-    ]</xpath>
-    <value>
-      <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>10</complexity>
-        <accidentType>methlab</accidentType>
-      </li>
-    </value>
-  </Operation>
-<!-- RecipeDef Examples -->
-  <Operation Class="PatchOperationAddModExtension">
-    <xpath>Defs/RecipeDef[
-      defName="ButcherCorpseFlesh"
-    ]</xpath>
-    <value>
-      <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>0</complexity>
-        <accidentType>butchery</accidentType>
-      </li>
-    </value>
-  </Operation>
-
-  <Operation Class="PatchOperationAddModExtension">
-    <xpath>Defs/RecipeDef[
-      @Name="ButcherCorpseMechanoidBase"
-    ]</xpath>
-    <value>
-      <li Class="Industrial_Accidents.IAccidentModExtension">
-        <complexity>3</complexity><!-- this will stack -->
-        <accidentType>mechanoid</accidentType>
       </li>
     </value>
   </Operation>

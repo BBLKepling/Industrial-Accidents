@@ -8,7 +8,91 @@ namespace Industrial_Accidents
 {
     public static class IAccidents
     {
-        //Accidents
+        //Job Accidents
+        public static bool MiningAccident(Pawn victim, float complexOffset, SkillDef skillDef)
+        {
+            Thing thing = (Thing)victim.jobs.curJob.GetTarget(TargetIndex.A);
+            if (skillDef == null)
+            {
+                skillDef = SkillDefOf.Mining;
+            }
+            if (victim.skills.GetSkill(skillDef).levelInt > 20)
+            {
+                //hard cap at skill level 20
+                complexOffset -= 2.0f;
+            }
+            else
+            {
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
+            }
+            //float randChance = 30;
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
+            List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
+            List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
+            List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
+            List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
+            List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
+            List<BodyPartRecord> eyeParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Eye);
+            List<BodyPartRecord> targetParts = new List<BodyPartRecord>();
+            targetParts.AddRange(fingerParts);
+            targetParts.AddRange(handParts);
+            targetParts.AddRange(armParts);
+            targetParts.AddRange(toeParts);
+            targetParts.AddRange(footParts);
+            targetParts.AddRange(eyeParts);
+            HediffSet pawnParts = victim.health.hediffSet;
+            List<BodyPartRecord> hasParts = new List<BodyPartRecord>();
+            foreach (BodyPartRecord part in targetParts)
+            {
+                if (!pawnParts.PartIsMissing(part))
+                {
+                    hasParts.Add(part);
+                }
+            }
+            if (hasParts.Any())
+            {
+                BodyPartRecord selectPart = hasParts.RandomElement();
+                BodyPartDef part = selectPart.def;
+                Hediff hediffCrush = HediffMaker.MakeHediff(IAccidentDefOf.Crush, victim);
+                Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
+                if (randChance > 5)
+                {
+                    if (fingerParts.Contains(selectPart) ||
+                        handParts.Contains(selectPart) ||
+                        footParts.Contains(selectPart) ||
+                        toeParts.Contains(selectPart))
+                    {
+                        hediffCrush.Severity = Rand.Range(1f, 5f);
+                        victim.health.AddHediff(hediffCrush, selectPart);
+                        Find.LetterStack.ReceiveLetter(
+                            "BBLK_IAccidentLabel".Translate(),
+                            "BBLK_MineCrush".Translate(
+                                victim.LabelShort, victim.Named("VICTIM"),
+                                thing.Label, thing.Named("THING"),
+                                part.label, part.Named("PART")),
+                            LetterDefOf.NegativeEvent,
+                            new TargetInfo(victim.Position, victim.Map));
+                        victim.jobs.StopAll();
+                        return true;
+                    }
+                }
+                hediffCut.Severity = Rand.Range(1f, 5f);
+                victim.health.AddHediff(hediffCut, selectPart);
+                Find.LetterStack.ReceiveLetter(
+                    "BBLK_IAccidentLabel".Translate(),
+                    "BBLK_MineCut".Translate(
+                        victim.LabelShort, victim.Named("VICTIM"),
+                        thing.Label, thing.Named("THING"),
+                        part.label, part.Named("PART")),
+                    LetterDefOf.NegativeEvent,
+                    new TargetInfo(victim.Position, victim.Map));
+                victim.jobs.StopAll();
+                return true;
+            }
+            return false;
+        }
+        //Building Accidents
         public static bool IndustrialAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
             Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
@@ -16,19 +100,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance =  Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 Thing meat = GenSpawn.Spawn(ThingDefOf.Meat_Human, building.Position, building.Map);
@@ -132,10 +215,10 @@ namespace Industrial_Accidents
                 }
                 if (randChance > 6)
                 {
-                    if (fingerParts.Contains(selectPart) || 
-                        handParts.Contains(selectPart) || 
-                        footParts.Contains(selectPart) || 
-                        toeParts.Contains(selectPart) || 
+                    if (fingerParts.Contains(selectPart) ||
+                        handParts.Contains(selectPart) ||
+                        footParts.Contains(selectPart) ||
+                        toeParts.Contains(selectPart) ||
                         junkParts.Contains(selectPart))
                     {
                         hediffCrush.Severity = Rand.Range(1f, 5f);
@@ -174,19 +257,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
             List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
@@ -263,7 +345,7 @@ namespace Industrial_Accidents
                 }
                 if (randChance > 7)
                 {
-                    if (fingerParts.Contains(selectPart) || 
+                    if (fingerParts.Contains(selectPart) ||
                         handParts.Contains(selectPart) ||
                         toeParts.Contains(selectPart) ||
                         footParts.Contains(selectPart))
@@ -322,19 +404,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> toeParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Toe);
             List<BodyPartRecord> footParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Foot);
@@ -365,7 +446,7 @@ namespace Industrial_Accidents
                 Hediff hediffCut = HediffMaker.MakeHediff(HediffDefOf.Cut, victim);
                 if (randChance > 5)
                 {
-                    if (fingerParts.Contains(selectPart) || 
+                    if (fingerParts.Contains(selectPart) ||
                         handParts.Contains(selectPart) ||
                         footParts.Contains(selectPart) ||
                         toeParts.Contains(selectPart))
@@ -406,19 +487,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Cooking;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && ModsConfig.BiotechActive && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
@@ -531,19 +611,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Cooking;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
@@ -634,19 +713,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 10 && IAccidentSettings.catastrophic)
             {
                 GenExplosion.DoExplosion(
@@ -729,19 +807,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 150 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
@@ -882,19 +959,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
@@ -1020,19 +1096,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
@@ -1102,19 +1177,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Crafting;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             List<BodyPartRecord> fingerParts = victim.def.race.body.GetPartsWithDef(IAccidentDefOf.Finger);
             List<BodyPartRecord> handParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Hand);
             List<BodyPartRecord> armParts = victim.def.race.body.GetPartsWithDef(BodyPartDefOf.Arm);
@@ -1190,19 +1264,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(
@@ -1328,19 +1401,18 @@ namespace Industrial_Accidents
             {
                 skillDef = SkillDefOf.Intellectual;
             }
-            float craftSkill;
             if (victim.skills.GetSkill(skillDef).levelInt > 20)
             {
                 //hard cap at skill level 20
-                craftSkill = 2.0f;
+                complexOffset -= 2.0f;
             }
             else
             {
-                craftSkill = victim.skills.GetSkill(skillDef).levelInt / 10;
+                complexOffset -= victim.skills.GetSkill(skillDef).levelInt / 10;
             }
             //float randChance = 30;
-            float randChance = Rand.Range(2f, 7f) + Rand.Range(2f, 7f) + Rand.Range(2f, 6f) + complexOffset - craftSkill;
-            //6-20 bell curve + complexity - manipulation(cap 2) - skill(cap 2)
+            float randChance = Rand.Range(3f, 10f) + Rand.Range(3f, 10f) + complexOffset;
+            //6-20 bell curve(2d8+4) + complexity - manipulation(cap 2) - skill(cap 2)
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 GenExplosion.DoExplosion(

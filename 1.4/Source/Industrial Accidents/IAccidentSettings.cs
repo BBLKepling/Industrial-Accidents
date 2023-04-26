@@ -1,5 +1,5 @@
-﻿using Verse;
-using UnityEngine;
+﻿using UnityEngine;
+using Verse;
 
 namespace Industrial_Accidents
 {
@@ -16,7 +16,7 @@ namespace Industrial_Accidents
     }
     public class IAccidentMod : Mod
     {
-        public IAccidentMod(ModContentPack content) : base(content) 
+        public IAccidentMod(ModContentPack content) : base(content)
         {
             GetSettings<IAccidentSettings>();
         }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/RecipeDef[
+      defName="ButcherCorpseFlesh"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <accidentType>butchery</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/RecipeDef[
+      @Name="ButcherCorpseMechanoidBase"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <complexity>1</complexity><!-- this will stack -->
+        <accidentType>mechanoid</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+</Patch>

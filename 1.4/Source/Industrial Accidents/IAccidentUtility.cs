@@ -14,17 +14,15 @@ namespace Industrial_Accidents
             for (int i = 0; i < pawns.Count; i++)
             {
                 if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
-                if (ModLister.HasActiveModWithName("Research Reinvented"))
+                if (pawns[i].jobs.curJob == null) { continue; }
+                if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
+                if (pawns[i].jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
-                    if (!(pawns[i].jobs.curJob?.def == JobDefOf.DoBill) && !(pawns[i].jobs.curJob?.def == JobDefOf.Research) && !(pawns[i].jobs.curJob?.def == IAccidentDefOf.RR_Research)) { continue; }
-                }
-                else
-                {
-                    if (!(pawns[i].jobs.curJob?.def == JobDefOf.DoBill) && !(pawns[i].jobs.curJob?.def == JobDefOf.Research)) { continue; }
+                    yield return pawns[i];
                 }
                 Building building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
                 if (building == null) { continue; }
-                if ((pawns[i].Position - building.Position).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
                     if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
@@ -58,24 +56,58 @@ namespace Industrial_Accidents
         //TryExecuteWorker
         public static bool TryHurtPawn(Pawn victim)
         {
-            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
-            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
             // pull Mod Extension info
-            // RecipeDef>1stProduct>Building
+            // RecipeDef>1stProduct>Building>JobDef
             SkillDef skillOverride = null;
-            ThingDef productThingDef = null;
             string accType = null;
             float complexOffset = 0f;
-            if (building.def.HasModExtension<IAccidentModExtension>())
+            if (victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation) > 2.0f)
             {
-                complexOffset += building.def.GetModExtension<IAccidentModExtension>().complexity;
-                if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                //hard cap at 200%
+                complexOffset -= 2.0f;
+            }
+            else
+            {
+                complexOffset -= victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
+            }
+            if (victim.jobs.curJob.def.HasModExtension<IAccidentModExtension>())
+            {
+                complexOffset += victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().complexity;
+                if (victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
-                    accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                    accType = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType;
                 }
-                if (building.def.GetModExtension<IAccidentModExtension>().skillDef != null)
+                if (victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().skillDef != null)
                 {
-                    skillOverride = building.def.GetModExtension<IAccidentModExtension>().skillDef;
+                    skillOverride = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().skillDef;
+                }
+            }
+            if (accType != null)
+            {
+                accType = accType.ToLower();
+            }
+            // Job Accidents
+            switch (accType)
+            {
+                case "mining":
+                    return IAccidents.MiningAccident(victim, complexOffset, skillOverride);
+            }
+            Building building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
+            RecipeDef recipe = victim.jobs.curJob.RecipeDef;
+            ThingDef productThingDef = null;
+            if (building != null)
+            {
+                if (building.def.HasModExtension<IAccidentModExtension>())
+                {
+                    complexOffset += building.def.GetModExtension<IAccidentModExtension>().complexity;
+                    if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    {
+                        accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                    }
+                    if (building.def.GetModExtension<IAccidentModExtension>().skillDef != null)
+                    {
+                        skillOverride = building.def.GetModExtension<IAccidentModExtension>().skillDef;
+                    }
                 }
             }
             if (recipe != null)
@@ -118,17 +150,8 @@ namespace Industrial_Accidents
                     }
                 }
             }
-            if (victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation) > 2.0f)
-            {
-                //hard cap at 200%
-                complexOffset -= 2.0f;
-            }
-            else
-            {
-                complexOffset -= victim.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
-            }
             accType = accType.ToLower();
-            // Accidents
+            // Building Accidents
             switch (accType)
             {
                 case "industrial":
@@ -172,13 +195,36 @@ namespace Industrial_Accidents
                 accType != "spaceresearch")
             {
                 Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
-                Log.Error("Industrial Accidents: Usable strings: industrial, medieval, neolithic, cooking, butchery, mechanoid, methlab, chemical, chemfuel, sewing, indresearch, spaceresearch");
+                Log.Error("Industrial Accidents: Usable Job strings: mining");
+                Log.Error("Industrial Accidents: Usable Building strings: industrial, medieval, neolithic, cooking, butchery, mechanoid, methlab, chemical, chemfuel, sewing, indresearch, spaceresearch");
+                if (victim.jobs.curJob.def.HasModExtension<IAccidentModExtension>())
+                {
+                    string errorJob = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType;
+                    if (errorJob != null &&
+                        errorJob != "mining" &&
+                        errorJob != "industrial" &&
+                        errorJob != "medieval" &&
+                        errorJob != "neolithic" &&
+                        errorJob != "cooking" &&
+                        errorJob != "butchery" &&
+                        errorJob != "mechanoid" &&
+                        errorJob != "methlab" &&
+                        errorJob != "chemical" &&
+                        errorJob != "chemfuel" &&
+                        errorJob != "sewing" &&
+                        errorJob != "indresearch" &&
+                        errorJob != "spaceresearch")
+                    {
+                        Log.Error("Industrial Accidents: JobDef <defName>" + victim.jobs.curJob.def.defName + "</defName> has <accidentType>" + errorJob + "</accidentType>");
+                    }
+                }
                 if (building != null)
                 {
                     if (building.def.HasModExtension<IAccidentModExtension>())
                     {
                         string errorBuilding = building.def.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorBuilding != null &&
+                            errorBuilding != "mining" &&
                             errorBuilding != "industrial" &&
                             errorBuilding != "medieval" &&
                             errorBuilding != "neolithic" &&
@@ -202,6 +248,7 @@ namespace Industrial_Accidents
                     {
                         string errorThingDef = productThingDef.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorThingDef != null &&
+                            errorThingDef != "mining" &&
                             errorThingDef != "industrial" &&
                             errorThingDef != "medieval" &&
                             errorThingDef != "neolithic" &&
@@ -225,6 +272,7 @@ namespace Industrial_Accidents
                     {
                         string errorRecipeDef = recipe.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorRecipeDef != null &&
+                            errorRecipeDef != "mining" &&
                             errorRecipeDef != "industrial" &&
                             errorRecipeDef != "medieval" &&
                             errorRecipeDef != "neolithic" &&
