@@ -16,7 +16,7 @@ namespace Industrial_Accidents
                 if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
                 if (pawns[i].jobs.curJob == null) { continue; }
                 if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
-                if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                if ((pawns[i].Position - pawns[i].jobs.curJob.targetA.Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                 if (ModLister.HasActiveModWithName("Research Reinvented"))
                 {
                     if (pawns[i].jobs.curJob.def == IAccidentDefOf.RR_Analyse)
@@ -28,18 +28,8 @@ namespace Industrial_Accidents
                 {
                     yield return pawns[i];
                 }
-                Building building = null;
-                if (ModLister.HasActiveModWithName("Research Reinvented"))
-                {
-                    if (pawns[i].jobs.curJob.def == IAccidentDefOf.RR_Analyse)
-                    {
-                        building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.B);
-                    }
-                }
-                if (building == null)
-                {
-                    building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
-                }
+                if (!(pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Thing is Building)) { continue; }
+                Building building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
                 if (building == null) { continue; }
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
@@ -110,14 +100,14 @@ namespace Industrial_Accidents
             {
                 case "mining":
                     return IAccidents.MiningAccident(victim, complexOffset, skillOverride);
-                //case "analyseinplace":
-                    //return IAccidents.AnalyseInPlaceAccident(victim, complexOffset, skillOverride);
-                //case "analyseterrain":
-                    //return IAccidents.AnalyseTerrainAccident(victim, complexOffset, skillOverride);
+                case "analyseinplace":
+                    return IAccidents.AnalyseInPlaceAccident(victim, complexOffset, skillOverride);
+                case "analyseterrain":
+                    return IAccidents.AnalyseTerrainAccident(victim, complexOffset, skillOverride);
             }
             Building building = null;
             if (ModLister.HasActiveModWithName("Research Reinvented"))
-            { 
+            {
                 if (victim.jobs.curJob.def == IAccidentDefOf.RR_Analyse)
                 {
                     building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.B);
@@ -210,6 +200,8 @@ namespace Industrial_Accidents
                     return IAccidents.SewingAccident(victim, complexOffset, skillOverride, building);
                 case "indresearch":
                     return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride, building);
+                case "neoresearch":
+                    return IAccidents.NeoResearchAccident(victim, complexOffset, skillOverride, building);
                 case "spaceresearch":
                     return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride, building);
             }

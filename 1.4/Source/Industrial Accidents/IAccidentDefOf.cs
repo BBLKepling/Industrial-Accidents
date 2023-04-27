@@ -18,7 +18,7 @@ namespace Industrial_Accidents
         [MayRequire("conit.thebirdsandthebees")]
         public static BodyPartDef ReproductiveOrgans;
 
-        [MayRequire("PeteTimesSix.ResearchReinvented<")]
+        [MayRequire("PeteTimesSix.ResearchReinvented")]
         public static JobDef RR_Analyse;
         static IAccidentDefOf()
         {

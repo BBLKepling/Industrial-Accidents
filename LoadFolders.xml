@@ -2,5 +2,6 @@
   <v1.4>
     <li IfModActive="Dubwise.DubsBadHygiene">1.4/Mods/DBH</li><!-- This needs to overwrite -->
     <li>1.4</li>
+    <li IfModActive="PeteTimesSix.ResearchReinvented">1.4/Mods/Research_Reinvented</li>
   </v1.4>
 </loadFolders>

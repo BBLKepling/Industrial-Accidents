@@ -2,6 +2,7 @@
 <LanguageData>
 
   <BBLK_IAccidentLabel>Accident!</BBLK_IAccidentLabel>
+  <BBLK_OwMyBallsLabel>Ow! My Balls!</BBLK_OwMyBallsLabel>
   
   <!-- General -->
   <BBLK_IndCataCut>{VICTIM_labelShort} had an accident at {BUILDING_label} and cut off their {PART_label}.</BBLK_IndCataCut>
@@ -21,6 +22,10 @@
   <BBLK_MineCrush>{VICTIM_labelShort} had an accident while mining at {THING_label} and smashed their {PART_label}.</BBLK_MineCrush>
   <BBLK_MineCut>{VICTIM_labelShort} had an accident while mining at {THING_label} and cut their {PART_label}.</BBLK_MineCut>
   
+  <!-- Analyse Terrain -->
+  <BBLK_AnalyseTerrainCrush>{VICTIM_labelShort} had an accident while researching and smashed their {PART_label}.</BBLK_AnalyseTerrainCrush>
+  <BBLK_AnalyseTerrainCut>{VICTIM_labelShort} had an accident while researching and cut their {PART_label}.</BBLK_AnalyseTerrainCut>
+  
   <!-- Chemical -->
   <BBLK_ChemBurn>{VICTIM_labelShort} was careless with chemicals at {BUILDING_label} and burned their {PART_label}.</BBLK_ChemBurn>
   
@@ -30,5 +35,8 @@
   <BBLK_ExplosionSmoke>{VICTIM_labelShort} had an accident at {BUILDING_label} and created a smoke cloud.</BBLK_ExplosionSmoke>
   <BBLK_ExplosionMech>{VICTIM_labelShort} had an accident at {BUILDING_label} dismantling a mechanoid and created an EMP blast.</BBLK_ExplosionMech>
   <BBLK_ExplosionMethLab>{VICTIM_labelShort} had an accident making meth at {BUILDING_label} and caused an explosion.</BBLK_ExplosionMethLab>
+  
+  <!-- Research -->
+  <BBLK_BrainHurt>{VICTIM_labelShort} hurt their brain thinking too hard at {BUILDING_label}.</BBLK_BrainHurt>
   
 </LanguageData>

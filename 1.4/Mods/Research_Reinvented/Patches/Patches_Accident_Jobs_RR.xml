@@ -3,34 +3,24 @@
 
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/JobDef[
-      defName="DoBill"
-    ]</xpath>
-    <value>
-      <li Class="Industrial_Accidents.IAccidentModExtension" />
-    </value>
-  </Operation>
-
-  <Operation Class="PatchOperationAddModExtension">
-    <xpath>Defs/JobDef[
-      defName="Research" or 
-      defName="RR_Research" or 
-      defName="RR_Analyse"
+      defName="RR_AnalyseInPlace"
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
-        <accidentType>neoresearch</accidentType>
+        <complexity>2</complexity>
+        <accidentType>analyseinplace</accidentType>
       </li>
     </value>
   </Operation>
 
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/JobDef[
-      defName="Mine"
+      defName="RR_AnalyseTerrain"
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">
         <complexity>2</complexity>
-        <accidentType>mining</accidentType>
+        <accidentType>analyseterrain</accidentType>
       </li>
     </value>
   </Operation>
