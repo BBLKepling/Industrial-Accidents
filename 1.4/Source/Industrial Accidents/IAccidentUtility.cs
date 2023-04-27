@@ -198,16 +198,18 @@ namespace Industrial_Accidents
                     return IAccidents.ChemfuelAccident(victim, complexOffset, skillOverride, building);
                 case "sewing":
                     return IAccidents.SewingAccident(victim, complexOffset, skillOverride, building);
-                case "indresearch":
-                    return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride, building);
                 case "neoresearch":
                     return IAccidents.NeoResearchAccident(victim, complexOffset, skillOverride, building);
+                case "indresearch":
+                    return IAccidents.IndResearchAccident(victim, complexOffset, skillOverride, building);
                 case "spaceresearch":
                     return IAccidents.SpaceResearchAccident(victim, complexOffset, skillOverride, building);
             }
             // Error Reporting
             if (
                 accType != "mining" &&
+                accType != "analyseinplace" &&
+                accType != "analyseterrain" &&
                 accType != "industrial" &&
                 accType != "medieval" &&
                 accType != "neolithic" &&
@@ -218,17 +220,20 @@ namespace Industrial_Accidents
                 accType != "chemical" &&
                 accType != "chemfuel" &&
                 accType != "sewing" &&
+                accType != "neoresearch" &&
                 accType != "indresearch" &&
                 accType != "spaceresearch")
             {
                 Log.Error("Industrial Accidents: Unsupported string in <accidentType> node");
-                Log.Error("Industrial Accidents: Usable Job strings: mining");
-                Log.Error("Industrial Accidents: Usable Building strings: industrial, medieval, neolithic, cooking, butchery, mechanoid, methlab, chemical, chemfuel, sewing, indresearch, spaceresearch");
+                Log.Error("Industrial Accidents: Usable Job strings: mining, analyseinplace, analyseterrain");
+                Log.Error("Industrial Accidents: Usable Building strings: industrial, medieval, neolithic, cooking, butchery, mechanoid, methlab, chemical, chemfuel, sewing, neoresearch, indresearch, spaceresearch");
                 if (victim.jobs.curJob.def.HasModExtension<IAccidentModExtension>())
                 {
                     string errorJob = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType;
                     if (errorJob != null &&
                         errorJob != "mining" &&
+                        errorJob != "analyseinplace" &&
+                        errorJob != "analyseterrain" &&
                         errorJob != "industrial" &&
                         errorJob != "medieval" &&
                         errorJob != "neolithic" &&
@@ -239,6 +244,7 @@ namespace Industrial_Accidents
                         errorJob != "chemical" &&
                         errorJob != "chemfuel" &&
                         errorJob != "sewing" &&
+                        errorJob != "neoresearch" &&
                         errorJob != "indresearch" &&
                         errorJob != "spaceresearch")
                     {
@@ -252,6 +258,8 @@ namespace Industrial_Accidents
                         string errorBuilding = building.def.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorBuilding != null &&
                             errorBuilding != "mining" &&
+                            errorBuilding != "analyseinplace" &&
+                            errorBuilding != "analyseterrain" &&
                             errorBuilding != "industrial" &&
                             errorBuilding != "medieval" &&
                             errorBuilding != "neolithic" &&
@@ -262,6 +270,7 @@ namespace Industrial_Accidents
                             errorBuilding != "chemical" &&
                             errorBuilding != "chemfuel" &&
                             errorBuilding != "sewing" &&
+                            errorBuilding != "neoresearch" &&
                             errorBuilding != "indresearch" &&
                             errorBuilding != "spaceresearch")
                         {
@@ -276,6 +285,8 @@ namespace Industrial_Accidents
                         string errorThingDef = productThingDef.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorThingDef != null &&
                             errorThingDef != "mining" &&
+                            errorThingDef != "analyseinplace" &&
+                            errorThingDef != "analyseterrain" &&
                             errorThingDef != "industrial" &&
                             errorThingDef != "medieval" &&
                             errorThingDef != "neolithic" &&
@@ -286,6 +297,7 @@ namespace Industrial_Accidents
                             errorThingDef != "chemical" &&
                             errorThingDef != "chemfuel" &&
                             errorThingDef != "sewing" &&
+                            errorThingDef != "neoresearch" &&
                             errorThingDef != "indresearch" &&
                             errorThingDef != "spaceresearch")
                         {
@@ -300,6 +312,8 @@ namespace Industrial_Accidents
                         string errorRecipeDef = recipe.GetModExtension<IAccidentModExtension>().accidentType;
                         if (errorRecipeDef != null &&
                             errorRecipeDef != "mining" &&
+                            errorRecipeDef != "analyseinplace" &&
+                            errorRecipeDef != "analyseterrain" &&
                             errorRecipeDef != "industrial" &&
                             errorRecipeDef != "medieval" &&
                             errorRecipeDef != "neolithic" &&
@@ -310,6 +324,7 @@ namespace Industrial_Accidents
                             errorRecipeDef != "chemical" &&
                             errorRecipeDef != "chemfuel" &&
                             errorRecipeDef != "sewing" &&
+                            errorRecipeDef != "neoresearch" &&
                             errorRecipeDef != "indresearch" &&
                             errorRecipeDef != "spaceresearch")
                         {
