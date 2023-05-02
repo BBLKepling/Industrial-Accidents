@@ -3,6 +3,18 @@
 
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/JobDef[
+      defName="RR_Research" or 
+      defName="RR_Analyse"
+    ]</xpath>
+    <value>
+      <li Class="Industrial_Accidents.IAccidentModExtension">
+        <accidentType>neoresearch</accidentType>
+      </li>
+    </value>
+  </Operation>
+
+  <Operation Class="PatchOperationAddModExtension">
+    <xpath>Defs/JobDef[
       defName="RR_AnalyseInPlace"
     ]</xpath>
     <value>

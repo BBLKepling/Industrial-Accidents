@@ -18,6 +18,12 @@ namespace Industrial_Accidents
         [MayRequire("conit.thebirdsandthebees")]
         public static BodyPartDef ReproductiveOrgans;
 
+        [MayRequire("DankPyon.Medieval.Overhaul")]
+        public static ThingDef DankPyon_Bone;
+
+        [MayRequire("sihv.rombones")]
+        public static ThingDef BoneItem;
+
         [MayRequire("PeteTimesSix.ResearchReinvented")]
         public static JobDef RR_Analyse;
         static IAccidentDefOf()

@@ -12,9 +12,7 @@
 
   <Operation Class="PatchOperationAddModExtension">
     <xpath>Defs/JobDef[
-      defName="Research" or 
-      defName="RR_Research" or 
-      defName="RR_Analyse"
+      defName="Research"
     ]</xpath>
     <value>
       <li Class="Industrial_Accidents.IAccidentModExtension">

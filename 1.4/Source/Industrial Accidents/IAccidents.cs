@@ -8,6 +8,8 @@ namespace Industrial_Accidents
 {
     public static class IAccidents
     {
+        public static bool modBoolMO = ModLister.HasActiveModWithName("Medieval Overhaul");
+        public static bool modBoolRomB = ModLister.HasActiveModWithName("Rim of Madness - Bones");
         //Job Accidents
         public static bool MiningAccident(Pawn victim, float complexOffset, SkillDef skillDef)
         {
@@ -278,11 +280,47 @@ namespace Industrial_Accidents
             if (randChance > 15 && IAccidentSettings.lethal)
             {
                 Thing meat = GenSpawn.Spawn(ThingDefOf.Meat_Human, building.Position, building.Map);
-                meat.stackCount = Rand.Range(30, 40);
+                meat.stackCount = Rand.Range(20, 30);
                 Thing meats = GenSpawn.Spawn(ThingDefOf.Meat_Human, victim.Position, victim.Map);
-                meats.stackCount = Rand.Range(25, 35);
-                FilthMaker.TryMakeFilth(building.Position, building.Map, ThingDefOf.Filth_Blood, 5);
-                FilthMaker.TryMakeFilth(victim.Position, victim.Map, ThingDefOf.Filth_Blood, 5);
+                meats.stackCount = Rand.Range(20, 30);
+                if (modBoolMO)
+                {
+                    Thing bones = GenSpawn.Spawn(IAccidentDefOf.DankPyon_Bone, victim.Position, victim.Map);
+                    bones.stackCount = Rand.Range(20, 30);
+                }
+                if (modBoolRomB)
+                {
+                    Thing bones = GenSpawn.Spawn(IAccidentDefOf.BoneItem, victim.Position, victim.Map);
+                    bones.stackCount = Rand.Range(20, 30);
+                }
+                int num = GenRadial.NumCellsInRadius(5);
+                CellRect startRect = victim.OccupiedRect();
+                for (int i = 0; i < num; i++)
+                {
+                    IntVec3 intVec = victim.Position + GenRadial.RadialPattern[i];
+                    if (GenSight.LineOfSight(victim.Position, intVec, victim.Map, startRect, CellRect.SingleCell(intVec)))
+                    {
+                        if (Rand.Range(1, 20) == 10)
+                        {
+                            Thing randomMeat = GenSpawn.Spawn(ThingDefOf.Meat_Human, intVec, victim.Map);
+                            randomMeat.stackCount = Rand.Range(1, 3);
+                        }
+                        if (Rand.Range(1, 20) == 10)
+                        {
+                            if (modBoolMO)
+                            {
+                                Thing randomBones = GenSpawn.Spawn(IAccidentDefOf.DankPyon_Bone, victim.Position, victim.Map);
+                                randomBones.stackCount = Rand.Range(1, 3);
+                            }
+                            if (modBoolRomB)
+                            {
+                                Thing randomBones = GenSpawn.Spawn(IAccidentDefOf.BoneItem, victim.Position, victim.Map);
+                                randomBones.stackCount = Rand.Range(1, 3);
+                            }
+                        }
+                        FilthMaker.TryMakeFilth(intVec, victim.Map, ThingDefOf.Filth_Blood, 3);
+                    }
+                }
                 Find.LetterStack.ReceiveLetter(
                     "BBLK_IAccidentLabel".Translate(),
                     "BBLK_IndSuck".Translate(

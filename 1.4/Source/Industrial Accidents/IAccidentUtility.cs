@@ -1,35 +1,38 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
 using Verse;
-using Verse.AI;
 
 namespace Industrial_Accidents
 {
     public static class IAccidentUtility
     {
+        public static bool modBoolRR = ModLister.HasActiveModWithName("Research Reinvented");
         //CanFireNowSub
         public static IEnumerable<Pawn> GetWorkingPawns(Map map)
         {
-            List<Pawn> pawns = map.mapPawns.AllPawns;
+            List<Pawn> pawns = new List<Pawn>();
+            pawns.AddRange(map.mapPawns.FreeColonistsSpawned);
+            pawns.AddRange(map.mapPawns.SlavesOfColonySpawned);
+            //pawns.AddRange(map.mapPawns.AllPawns);
             for (int i = 0; i < pawns.Count; i++)
             {
-                if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
-                if (pawns[i].jobs.curJob == null) { continue; }
+                //if (!pawns[i].IsColonist && !pawns[i].IsSlaveOfColony && !pawns[i].IsColonyMech) { continue; }
+                if (pawns[i].jobs?.curJob == null) { continue; }
                 if (!pawns[i].jobs.curJob.def.HasModExtension<IAccidentModExtension>()) { continue; }
                 if ((pawns[i].Position - pawns[i].jobs.curJob.targetA.Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
-                if (ModLister.HasActiveModWithName("Research Reinvented"))
+                if (modBoolRR)
                 {
                     if (pawns[i].jobs.curJob.def == IAccidentDefOf.RR_Analyse)
                     {
-                        if ((pawns[i].Position - pawns[i].jobs.curJob.GetTarget(TargetIndex.B).Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
+                        if ((pawns[i].Position - pawns[i].jobs.curJob.targetB.Cell).ToVector3().MagnitudeHorizontal() > 3) { continue; }
                     }
                 }
                 if (pawns[i].jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
                 {
                     yield return pawns[i];
                 }
-                if (!(pawns[i].jobs.curJob.GetTarget(TargetIndex.A).Thing is Building)) { continue; }
-                Building building = (Building)pawns[i].jobs.curJob.GetTarget(TargetIndex.A);
+                if (!(pawns[i].jobs.curJob.targetA.Thing is Building)) { continue; }
+                Building building = (Building)pawns[i].jobs.curJob.targetA;
                 if (building == null) { continue; }
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
@@ -80,14 +83,15 @@ namespace Industrial_Accidents
             }
             if (victim.jobs.curJob.def.HasModExtension<IAccidentModExtension>())
             {
-                complexOffset += victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().complexity;
-                if (victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                IAccidentModExtension modExt = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>();
+                complexOffset += modExt.complexity;
+                if (modExt.accidentType != null)
                 {
-                    accType = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().accidentType;
+                    accType = modExt.accidentType;
                 }
-                if (victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().skillDef != null)
+                if (modExt.skillDef != null)
                 {
-                    skillOverride = victim.jobs.curJob.def.GetModExtension<IAccidentModExtension>().skillDef;
+                    skillOverride = modExt.skillDef;
                 }
             }
             if (accType != null)
@@ -106,29 +110,30 @@ namespace Industrial_Accidents
                     return IAccidents.AnalyseTerrainAccident(victim, complexOffset, skillOverride);
             }
             Building building = null;
-            if (ModLister.HasActiveModWithName("Research Reinvented"))
+            if (modBoolRR)
             {
                 if (victim.jobs.curJob.def == IAccidentDefOf.RR_Analyse)
                 {
-                    building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.B);
+                    building = (Building)victim.jobs.curJob.targetB;
                 }
             }
             if (building == null)
             {
-                building = (Building)victim.jobs.curJob.GetTarget(TargetIndex.A);
+                building = (Building)victim.jobs.curJob.targetA;
             }
             if (building != null)
             {
                 if (building.def.HasModExtension<IAccidentModExtension>())
                 {
-                    complexOffset += building.def.GetModExtension<IAccidentModExtension>().complexity;
-                    if (building.def.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    IAccidentModExtension modExt = building.def.GetModExtension<IAccidentModExtension>();
+                    complexOffset += modExt.complexity;
+                    if (modExt.accidentType != null)
                     {
-                        accType = building.def.GetModExtension<IAccidentModExtension>().accidentType;
+                        accType = modExt.accidentType;
                     }
-                    if (building.def.GetModExtension<IAccidentModExtension>().skillDef != null)
+                    if (modExt.skillDef != null)
                     {
-                        skillOverride = building.def.GetModExtension<IAccidentModExtension>().skillDef;
+                        skillOverride = modExt.skillDef;
                     }
                 }
             }
@@ -145,14 +150,15 @@ namespace Industrial_Accidents
                     {
                         if (productList[i].thingDef.HasModExtension<IAccidentModExtension>())
                         {
-                            if (productList[i].thingDef.GetModExtension<IAccidentModExtension>().accidentType != null)
+                            IAccidentModExtension modExt = productList[i].thingDef.GetModExtension<IAccidentModExtension>();
+                            if (modExt.accidentType != null)
                             {
-                                accType = productList[i].thingDef.GetModExtension<IAccidentModExtension>().accidentType;
+                                accType = modExt.accidentType;
                                 productThingDef = productList[i].thingDef;
                             }
-                            if (productList[i].thingDef.GetModExtension<IAccidentModExtension>().skillDef != null)
+                            if (modExt.skillDef != null)
                             {
-                                skillOverride = productList[i].thingDef.GetModExtension<IAccidentModExtension>().skillDef;
+                                skillOverride = modExt.skillDef;
                             }
                         }
                     }
@@ -163,14 +169,15 @@ namespace Industrial_Accidents
                 }
                 if (recipe.HasModExtension<IAccidentModExtension>())
                 {
-                    complexOffset += recipe.GetModExtension<IAccidentModExtension>().complexity;
-                    if (recipe.GetModExtension<IAccidentModExtension>().accidentType != null)
+                    IAccidentModExtension modExt = recipe.GetModExtension<IAccidentModExtension>();
+                    complexOffset += modExt.complexity;
+                    if (modExt.accidentType != null)
                     {
-                        accType = recipe.GetModExtension<IAccidentModExtension>().accidentType;
+                        accType = modExt.accidentType;
                     }
-                    if (recipe.GetModExtension<IAccidentModExtension>().skillDef != null)
+                    if (modExt.skillDef != null)
                     {
-                        skillOverride = recipe.GetModExtension<IAccidentModExtension>().skillDef;
+                        skillOverride = modExt.skillDef;
                     }
                 }
             }
